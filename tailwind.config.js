@@ -4,6 +4,7 @@ module.exports = {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
+    pre: ['Pretendard'],
     extend: {},
   },
   plugins: [],
