@@ -1,0 +1,19 @@
+<svg
+  viewBox="0 0 20 20"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+  class="w-5 h-5"
+>
+  <path
+    d="M2.4707 2L18.0004 18"
+    stroke="currentColor"
+    stroke-width="2.24615"
+    stroke-linecap="round"
+  />
+  <path
+    d="M17.5293 2L1.99956 18"
+    stroke="currentColor"
+    stroke-width="2.24615"
+    stroke-linecap="round"
+  />
+</svg>

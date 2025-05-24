@@ -1,13 +1,13 @@
 interface ProgressBarProps {
-  progress: number;
+  value: number;
 }
 
-const ProgressBar = ({ progress }: ProgressBarProps) => {
+const ProgressBar = ({ value }: ProgressBarProps) => {
   return (
-    <div className="w-[420px] h-[29px] rounded-[20px] bg-[#f2f2f2] overflow-hidden">
+    <div className="h-[29px] w-[420px] overflow-hidden rounded-[20px] bg-[#f2f2f2]">
       <div
         className="h-full bg-[#27cfa5] transition-all duration-300"
-        style={{ width: `${progress}%` }}
+        style={{ width: `${value}%` }}
       />
     </div>
   );
