@@ -1,0 +1,41 @@
+@theme {
+  /* Title */
+  --text-title1: 2rem; /* 32px */
+  --text-title1--font-weight: 600;
+  --text-title1--line-height: normal;
+  --text-title1--letter-spacing: -0.035em;
+
+  --text-title2: 1.75rem; /* 28px */
+  --text-title2--font-weight: 600;
+  --text-title2--line-height: normal;
+  --text-title2--letter-spacing: -0.035em;
+
+  --text-title3: 1.5rem; /* 24px */
+  --text-title3--font-weight: 600;
+  --text-title3--line-height: normal;
+  --text-title3--letter-spacing: -0.035em;
+
+  /* Subhead (Button) */
+  --text-subhead: 1.25rem; /* 20px */
+  --text-subhead--font-weight: 600;
+  --text-subhead--line-height: normal;
+  --text-subhead--letter-spacing: -0.035em;
+
+  /* Body1 */
+  --text-body1: 1.25rem; /* 20px */
+  --text-body1--font-weight: 500;
+  --text-body1--line-height: normal;
+  --text-body1--letter-spacing: -0.035em;
+
+  /* Body2 */
+  --text-body2: 1.125rem; /* 18px */
+  --text-body2--font-weight: 500;
+  --text-body2--line-height: normal;
+  --text-body2--letter-spacing: -0.035em;
+
+  /* Body3 */
+  --text-body3: 1rem; /* 16px */
+  --text-body3--font-weight: 400;
+  --text-body3--line-height: normal;
+  --text-body3--letter-spacing: -0.035em;
+}
