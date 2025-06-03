@@ -61,3 +61,30 @@
 .swiper-custom-pagination .swiper-pagination-bullet-active {
   background-color: var(--color-primary);
 }
+
+/* 조항 스크롤 바 */
+.custom-scrollbar {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: #e8e8e8 #fafafa;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 12px;
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #fafafa;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #e8e8e8;
+  border-radius: 9999px;
+  min-height: 40px;
+  border: 3px solid #e8e8e8;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #ededed;
+}

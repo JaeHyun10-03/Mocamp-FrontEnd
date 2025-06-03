@@ -1,0 +1,2 @@
+export const INQUIRY_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSe86bWghuoGdWztN99zC1g3-M4p2lplrJt4H8fDAaZb0OPs0Q/viewform?pli=1';
+export const INSTAGRAM_URL = 'https://www.instagram.com/mocamp.official/';
