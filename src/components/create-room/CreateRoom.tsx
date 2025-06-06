@@ -1,13 +1,14 @@
 import clsx from 'clsx';
 
 import { useRoomForm, RoomFormInput } from '@/hooks/useRoomForm';
-
+import { createRoom } from '@/apis/room';
 import CloseIcon from '@/public/svgs/closeIcon.svg';
 
 import ToggleMicButton from './ToggleMicButton';
 import LabeledBox from './LabeledBox';
 import NumberInput from './NumberInput';
 import ImageUploadBox from './ImageUploadBox';
+import { useRouter } from 'next/navigation';
 
 interface CreateRoomProps {
   onClose: () => void;
@@ -16,10 +17,31 @@ interface CreateRoomProps {
 const CreateRoom = ({ onClose }: CreateRoomProps) => {
   const { register, values, micOn, toggleMic, errors, isValid, handleSubmit, onImageSelect } =
     useRoomForm();
+  const router = useRouter();
 
-  const onSubmit = (data: RoomFormInput) => {
-    console.log('제출 데이터:', data);
-    // TODO: 방 생성 API 연결
+  const onSubmit = async (data: RoomFormInput) => {
+    try {
+      const payload = {
+        roomName: data.roomName,
+        capacity: Number(data.headcount),
+        description: '',
+        duration: `${data.hour.padStart(2, '0')}:${data.minute.padStart(2, '0')}`,
+        micAvailability: micOn,
+        micTurnedOn: true,
+        camTurnedOn: true,
+        image: data.imageFile!,
+      };
+
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        router.push('/login');
+        return;
+      }
+      const res = await createRoom(payload, accessToken);
+      router.push(`/room/${res.roomId}`);
+    } catch (err) {
+      alert('방 생성에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   return (

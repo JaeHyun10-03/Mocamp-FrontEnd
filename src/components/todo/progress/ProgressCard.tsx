@@ -13,26 +13,19 @@ interface ProgressCardProps {
   onUpdateTodos: (updatedTodos: Todo[]) => void;
 }
 
-const ProgressCard = ({
-  done,
-  total,
-  todos,
-  onUpdateTodos,
-}: ProgressCardProps) => {
+const ProgressCard = ({ done, total, todos, onUpdateTodos }: ProgressCardProps) => {
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [showCommitmentModal, setShowCommitmentModal] = useState(false);
   const [todayCommitment, setTodayCommitment] = useState('');
   const progress = total === 0 ? 0 : Math.round((done / total) * 100);
 
   return (
-    <div className="flex h-[150.38px] w-[480px] flex-col justify-between rounded-[20px] bg-[#FEFEFE] px-[30px] py-[30.48px]">
+    <div className="flex h-[150px] w-[480px] flex-col justify-between gap-5 rounded-[20px] bg-[#FEFEFE] p-[30px]">
       <div className="flex items-center justify-between">
         <div className="flex items-center">
           <ProgressBadge done={done} total={total} />
           <span className="ml-5 text-xl font-medium text-[#555555]">
-            {todayCommitment.trim() !== ''
-              ? todayCommitment
-              : '오늘의 다짐을 작성해주세요'}
+            {todayCommitment.trim() !== '' ? todayCommitment : '오늘의 다짐을 작성해주세요'}
           </span>
         </div>
         <MoreMenu

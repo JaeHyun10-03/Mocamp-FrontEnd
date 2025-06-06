@@ -1,6 +1,6 @@
 // lib/api.ts
 import axios from 'axios';
-import { getAccessToken, setAccessToken } from '../utils/token';
+import { getAccessToken, setAccessToken } from '@/utils/token';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
