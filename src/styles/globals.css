@@ -51,11 +51,31 @@
 
 /* 온보딩 스와이퍼 */
 .swiper-custom-pagination .swiper-pagination-bullet {
-  width: 10px;
-  height: 10px;
-  margin: 0 !important;
+  width: 5.3px;
+  height: 5.3px;
   border-radius: 9999px;
+  margin: 0 !important;
   background-color: var(--color-gray5);
+}
+
+@media (min-width: 1440px) {
+  .swiper-custom-pagination .swiper-pagination-bullet {
+    width: 7.5px;
+    height: 7.5px;
+    border-radius: 9999px;
+    margin: 0 !important;
+    background-color: var(--color-gray5);
+  }
+}
+
+@media (min-width: 1920px) {
+  .swiper-custom-pagination .swiper-pagination-bullet {
+    width: 10px;
+    height: 10px;
+    border-radius: 9999px;
+    margin: 0 !important;
+    background-color: var(--color-gray5);
+  }
 }
 
 .swiper-custom-pagination .swiper-pagination-bullet-active {
