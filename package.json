@@ -22,9 +22,10 @@
     "react-hook-form": "^7.56.4",
     "react-icons": "^5.5.0",
     "react-webcam": "^7.2.0",
+    "recharts": "^2.15.3",
     "swiper": "^11.2.8",
-    "tailwindcss": "^4.1.7",
     "uuid": "^11.1.0",
+    "tailwindcss": "^4.1.7",
     "zod": "^3.25.46",
     "zustand": "^5.0.3"
   },
@@ -44,7 +45,6 @@
     "eslint-config-next": "^15.2.4",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "^5.2.5",
-
     "eslint-plugin-tailwindcss": "^3.18.0",
     "postcss": "^8.5.4",
     "prettier": "^3.5.3",

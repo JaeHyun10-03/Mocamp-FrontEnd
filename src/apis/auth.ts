@@ -1,5 +1,5 @@
 import { setAccessToken } from '@/utils/token';
-import { apiAuth } from './axios';
+import { apiAuth } from '@/apis/axios';
 
 interface SocialLoginParams {
   code: string | null;

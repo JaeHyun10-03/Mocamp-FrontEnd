@@ -20,16 +20,16 @@ const GoogleLoginButton = () => {
   return (
     <button
       onClick={handleGoogleLogin}
-      className="flex bg-white w-full h-[6.25rem] justify-center items-center relative border border-gray-300 group"
+      className="group relative flex h-[6.25rem] w-full items-center justify-center border border-gray-300 bg-white"
     >
-      <div className="absolute inset-0 bg-black opacity-0 group-hover:opacity-5 rounded pointer-events-none transition-opacity duration-200" />
-      <p className="text-gray-700 text-[1.75rem] font-semibold">구글 계정으로 시작하기</p>
+      <div className="pointer-events-none absolute inset-0 rounded bg-black opacity-0 transition-opacity duration-200 group-hover:opacity-5" />
+      <p className="text-[1.75rem] font-semibold text-gray-700">구글 계정으로 시작하기</p>
       <div
-        className={`absolute right-[0.9375rem] top-[-1.625rem] items-center justify-center px-5 py-2.5 rounded-tl-[0.625rem] rounded-tr-[0.625rem] rounded-br-[0.625rem] bg-white border border-[#00af83] ${
+        className={`absolute top-[-1.625rem] right-[0.9375rem] items-center justify-center rounded-tl-[0.625rem] rounded-tr-[0.625rem] rounded-br-[0.625rem] border border-[#00af83] bg-white px-5 py-2.5 ${
           platform === 'google' ? 'flex' : 'hidden'
         }`}
       >
-        <p className="flex w-24 h-8 text-xl justify-center items-center font-semibold text-[#00af83] text-center">
+        <p className="flex h-8 w-24 items-center justify-center text-center text-xl font-semibold text-[#00af83]">
           최근 로그인
         </p>
       </div>
