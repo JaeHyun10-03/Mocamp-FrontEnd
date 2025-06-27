@@ -2,13 +2,19 @@
 import { useState } from 'react';
 import SidebarExitModal from '@/components/Sidebar/modal/SidebarExitModal';
 
-const SidebarExit = () => {
+interface SidebarExitProps {
+  onLeaveRoom: () => void; //
+}
+
+const SidebarExit = ({ onLeaveRoom }: SidebarExitProps) => {
   const [isExitModalOpen, setExitModalOpen] = useState(false);
 
   const handleExitClick = () => setExitModalOpen(true);
   const handleConfirmExit = () => {
+    onLeaveRoom();
     setExitModalOpen(false);
   };
+
   const handleCancelExit = () => {
     setExitModalOpen(false);
   };

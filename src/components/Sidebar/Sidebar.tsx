@@ -7,16 +7,19 @@ interface SidebarProps {
   startTime: Date;
   endTime: Date;
   participants: number;
+  onLeaveRoom: () => void; 
 }
 
-const Sidebar = ({ startTime, endTime, participants }: SidebarProps) => {
+const Sidebar = ({ startTime, endTime, participants, onLeaveRoom }: SidebarProps) => {
+
   return (
     <aside className="w-[200px] h-[1080px] bg-white flex flex-col items-center justify-between border-r border-solid border-[#E6E6E6] relative">
       <Timer startTime={startTime} endTime={endTime} />
       <Participants participants={participants} />
-      <Exit />
+      <Exit onLeaveRoom={onLeaveRoom} />
     </aside>
   );
 };
 
 export default Sidebar;
+
