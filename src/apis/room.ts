@@ -36,3 +36,15 @@ export const fetchRoomParticipants = async (roomId: string): Promise<Participant
     return [];
   }
 };
+
+// 방 입장 요청
+export const enterRoom = async (
+  roomId: string,
+  options: { micTurnedOn: boolean; camTurnedOn: boolean },
+) => {
+  const res = await apiWithToken.post(`/api/room/enter/${roomId}`, {
+    micTurnedOn: options.micTurnedOn,
+    camTurnedOn: options.camTurnedOn,
+  });
+  return res.data.message;
+};
