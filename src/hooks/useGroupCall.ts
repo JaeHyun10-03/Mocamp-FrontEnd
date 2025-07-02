@@ -60,7 +60,6 @@ export function useGroupCall({
     fetchData();
   }, [roomId]);
 
-
   // 로컬 미디어(캠/마이크) 스트림 가져오기
   const getLocalMediaStream = useCallback(async () => {
     try {
@@ -69,6 +68,7 @@ export function useGroupCall({
         audio: true,
       });
       setLocalStream(mediaStream);
+
       return mediaStream;
     } catch (err: any) {
       setError(err.message || '카메라/마이크 접근 실패');
@@ -89,7 +89,6 @@ export function useGroupCall({
     },
     [myUserId, roomId],
   );
-
   // 캠/마이크 토글 (켜기/끄기) 처리
   const toggleMedia = useCallback(
     (type: 'video' | 'audio', status: boolean) => {
@@ -100,16 +99,17 @@ export function useGroupCall({
         setParticipants((prev) =>
           prev.map((p) => (p.userId === myUserId ? { ...p, camStatus: status } : p)),
         );
+
         kurentoSignalingRef.current?.send(`/pub/data/cam-status/${roomId}`, {
           userId: myUserId,
           camStatus: status,
         });
-
       } else {
         localStream.getAudioTracks().forEach((track) => (track.enabled = status));
         setParticipants((prev) =>
           prev.map((p) => (p.userId === myUserId ? { ...p, micStatus: status } : p)),
         );
+
         kurentoSignalingRef.current?.send(`/pub/data/mic-status/${roomId}`, {
           userId: myUserId,
           micStatus: status,
@@ -118,7 +118,6 @@ export function useGroupCall({
     },
     [localStream, myUserId, roomId],
   );
-
   // 방장 위임 요청 전송
   const delegateAdmin = useCallback(
     (newAdminId: number) => {
@@ -130,10 +129,9 @@ export function useGroupCall({
   );
 
   // 방장 위임 모달 열기
- const openDelegationModal = useCallback(() => {
-  setIsDelegationOpen(true);
-}, []);
-
+  const openDelegationModal = useCallback(() => {
+    setIsDelegationOpen(true);
+  }, []);
   const handleSelectDelegate = useCallback((userId: number) => {
     setSelectedDelegateId(userId);
   }, []);
@@ -180,12 +178,10 @@ export function useGroupCall({
                   micStatus: true,
                   isAdmin: false,
                   stream: e.streams[0],
-
                   goals: [],
                   resolution: '',
                   isMyGoal: false,
                   isSecret: false,
-
                 },
               ];
             }
@@ -197,7 +193,6 @@ export function useGroupCall({
     },
     [myUsername],
   );
-
 
   //원격 유저의 sdpOffer 수신 시 SDP & answer 전송
   const receiveVideoFrom = useCallback(
@@ -241,7 +236,6 @@ export function useGroupCall({
   }, []);
 
   // 참가자 상태 업데이트
-
   const addParticipant = (participant: Participant) => {
     setParticipants((prev) =>
       prev.some((p) => p.userId === participant.userId) ? prev : [...prev, participant],
@@ -312,7 +306,6 @@ export function useGroupCall({
                 isSecret: false,
               },
             ]);
-
             socket.send('joinRoom', { room: `room${roomId}`, name: myUsername });
             hasJoinedRoom.current = true;
           }
@@ -320,7 +313,7 @@ export function useGroupCall({
           setError('장치 접근 실패');
         }
       }
-
+    });
     socket.on(
       'ADMIN_UPDATED',
       (msg: DelegationUpdateResponse & { type: string; previousAdminUsername: string }) => {
@@ -357,7 +350,6 @@ export function useGroupCall({
             resolution: '',
             isMyGoal: false,
             isSecret: false,
-
           },
         ]);
       }
@@ -374,6 +366,7 @@ export function useGroupCall({
     socket.on('newParticipantArrived', (msg) => {
       const { name } = msg;
       if (!name) return;
+
       if (participantsRef.current.some((p) => p.username === name)) return;
       const userId =
         name.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) % 10000;
@@ -394,7 +387,6 @@ export function useGroupCall({
           isSecret: false,
         },
       ]);
-
     });
 
     socket.on('error', (msg) => {
@@ -453,7 +445,6 @@ export function useGroupCall({
     };
   }, [roomId, myUsername, getLocalMediaStream]);
 
-
   return {
     participants,
     localStream,
@@ -464,7 +455,6 @@ export function useGroupCall({
     selectedDelegateId,
     setSelectedDelegateId,
     setAdminUsername,
-
     openDelegationModal,
     delegateAdmin,
     toggleMedia,

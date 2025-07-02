@@ -35,7 +35,7 @@ const [micStatus, setMicStatus] = useState(true);
   useEffect(() => {
     const loadRoom = async () => {
       try {
-        const res = await fetchRoomData(roomId);
+        const res = await fetchRoomData(roomId.toString());
         setRoomInfo({
           roomId: res.roomId,
           name: res.roomName,

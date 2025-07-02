@@ -60,3 +60,4 @@ export const fetchRoomParticipants = async (roomId: string): Promise<Participant
 export const leaveRoom = async (roomId: string) => {
   await apiWithToken.post(`/api/room/exit/${roomId}`);
   
+}
