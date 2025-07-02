@@ -48,3 +48,9 @@ export const enterRoom = async (
   });
   return res.data.message;
 };
+
+// 방 정보 조회
+export const fetchRoomData = async (roomId: number) => {
+  const res = await apiWithToken.get(`/api/room/${roomId}`);
+  return res.data.message;
+};

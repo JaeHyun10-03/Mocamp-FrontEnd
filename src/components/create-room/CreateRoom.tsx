@@ -1,7 +1,8 @@
 import clsx from 'clsx';
 
 import { useRoomForm, RoomFormInput } from '@/hooks/useRoomForm';
-import { createRoom } from '@/apis/room';
+import { createRoom, enterRoom } from '@/apis/room';
+
 import CloseIcon from '@/public/svgs/closeIcon.svg';
 
 import ToggleMicButton from './ToggleMicButton';
@@ -37,8 +38,12 @@ const CreateRoom = ({ onClose }: CreateRoomProps) => {
         router.push('/login');
         return;
       }
-      const res = await createRoom(payload, accessToken);
-      router.push(`/room/${res.roomId}`);
+      const roomId = await createRoom(payload, accessToken);
+      await enterRoom(roomId, {
+        micTurnedOn: true,
+        camTurnedOn: true,
+      });
+      router.push(`/preview/${roomId}`); // 프리뷰로 옮김
     } catch (err) {
       alert('방 생성에 실패했습니다. 다시 시도해주세요.');
     }
