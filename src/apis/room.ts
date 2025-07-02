@@ -61,3 +61,5 @@ export const leaveRoom = async (roomId: string) => {
   await apiWithToken.post(`/api/room/exit/${roomId}`);
   
 }
+
+
