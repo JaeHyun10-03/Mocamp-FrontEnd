@@ -37,6 +37,7 @@ export function useWebRTC({ roomId, userId }: UseWebRTCProps) {
         audio: true,
       });
         
+
         setStream(localStream);
 
         pc = new RTCPeerConnection({

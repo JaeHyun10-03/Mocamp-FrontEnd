@@ -25,7 +25,6 @@ const CreateRoom = ({ onClose }: CreateRoomProps) => {
       const payload = {
         roomName: data.roomName,
         capacity: Number(data.headcount),
-        description: '',
         duration: `${data.hour.padStart(2, '0')}:${data.minute.padStart(2, '0')}`,
         micAvailability: micOn,
         micTurnedOn: true,

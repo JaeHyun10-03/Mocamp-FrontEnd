@@ -35,16 +35,16 @@
 
 @layer utilities {
   /* 커스텀 스크롤바 */
-  .custom-scrollbar::-webkit-scrollbar {
+  .custom-scrollbar-main::-webkit-scrollbar {
     width: 10px;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-thumb {
+  .custom-scrollbar-main::-webkit-scrollbar-thumb {
     background-color: var(--color-gray4);
     border-radius: 10px;
   }
 
-  .custom-scrollbar::-webkit-scrollbar-track {
+  .custom-scrollbar-main::-webkit-scrollbar-track {
     background-color: #f8f8f8;
   }
 }

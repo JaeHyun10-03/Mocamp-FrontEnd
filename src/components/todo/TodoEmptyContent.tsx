@@ -4,21 +4,36 @@ import GoalModalWrapper from '@/components/todo/modal/GoalModalWrapper';
 
 interface TodoEmptyContentProps {
   onAddTodos: (newTodos: Todo[]) => void;
+  roomId: string;
+  isMyGoal: boolean;
+  isSecret: boolean;
 }
 
-const TodoEmptyContent = ({ onAddTodos }: TodoEmptyContentProps) => {
+const TodoEmptyContent = ({ onAddTodos, roomId, isMyGoal, isSecret }: TodoEmptyContentProps) => {
   const [showModal, setShowModal] = useState(false);
 
   const handleOpen = () => setShowModal(true);
   const handleClose = () => setShowModal(false);
 
+  if (!isMyGoal) {
+    return (
+      <div className="flex h-full w-64 flex-col items-center justify-center rounded-[20px] bg-[#FEFEFE] lg:w-90 xl:w-[480px]">
+        <span className="lg:text-subhead xl:text-title3 text-gray6 text-[12.8px]">
+          오늘의 목표를 추가하지 않았어요
+        </span>
+      </div>
+    );
+  }
+
   return (
     <>
-      <div className="flex h-full w-[480px] flex-col items-center justify-center gap-5 rounded-[20px] bg-[#FEFEFE]">
-        <span className="text-2xl font-semibold text-[#C4C4C4]">오늘의 목표는 무엇인가요?</span>
+      <div className="flex h-full w-64 flex-col items-center justify-center gap-[10.64px] rounded-[20px] bg-[#FEFEFE] lg:w-90 lg:gap-[14.97px] xl:w-[480px] xl:gap-5">
+        <span className="lg:text-subhead xl:text-title3 text-gray6 text-[12.8px]">
+          오늘의 목표는 무엇인가요?
+        </span>
         <button
           onClick={handleOpen}
-          className="h-[60px] w-[160px] rounded-[10px] bg-[#27CFA5] text-2xl font-semibold text-white"
+          className="bg-primary lg:text-body2 xl:text-title3 h-[31.933px] w-[85.333px] cursor-pointer rounded-[10px] text-[12.8px] font-semibold text-white lg:h-[44.906px] lg:w-30 xl:h-[60px] xl:w-[160px]"
         >
           추가하기
         </button>
@@ -26,12 +41,14 @@ const TodoEmptyContent = ({ onAddTodos }: TodoEmptyContentProps) => {
 
       {showModal && (
         <GoalModalWrapper
+          roomId={roomId}
           onClose={handleClose}
           mode="add"
           onSubmit={(newTodos) => {
             onAddTodos(newTodos);
             handleClose();
           }}
+          isSecret={isSecret}
         />
       )}
     </>

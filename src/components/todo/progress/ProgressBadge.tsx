@@ -34,9 +34,9 @@ const ProgressBadge = ({ done, total }: ProgressBadgeProps) => {
 
   return (
     <div
-      className={`flex h-[40.64px] w-[100px] items-center justify-center rounded-[20px] border ${text} ${border} ${bg}`}
+      className={`flex h-[21.67px] w-[49.845px] items-center justify-center rounded-[10.67px] border lg:h-[31px] lg:w-[70.095px] lg:rounded-[15px] xl:h-[40.64px] xl:w-[100px] xl:rounded-[20px] ${text} ${border} ${bg}`}
     >
-      <span className="text-lg font-semibold">
+      <span className="text-[9.6px] font-semibold lg:text-[13.5px] xl:text-lg">
         {done} / {total}
       </span>
     </div>

@@ -55,6 +55,7 @@ const [micStatus, setMicOn] = useState(true);
         </span>
       )}
 
+
       <div className="absolute bottom-0 left-0 box-border flex w-full items-center px-[50px] pb-[33px]">
         <span className="font-pre flex-shrink-0 text-[20px] font-semibold tracking-[-0.4px] text-white">
           {user.nickname}

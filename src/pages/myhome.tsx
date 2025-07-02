@@ -1,4 +1,4 @@
-import BasicHeader from '@/components/Header/BasicHeader';
+import CreateJoinHeader from '@/components/Header/CreateJoinHeader';
 import MocampUsageTrend from '@/components/myhome/MocampUsageTrend';
 import ParticipantedMocamp from '@/components/myhome/ParticipantedMocamp';
 import SideBar from '@/components/myhome/SideBar';
@@ -16,7 +16,7 @@ const myhome = () => {
 
   return (
     <div className="min-h-[1080px] min-w-[1920px] bg-[#e6e6e6]">
-      <BasicHeader />
+      <CreateJoinHeader />
       <div className="mt-[50px] flex justify-center gap-[10px]">
         <SideBar />
         {categoryMap[category] ?? null}

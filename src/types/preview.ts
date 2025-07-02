@@ -17,4 +17,3 @@ export interface UserInfo {
   error?: string | null;
 }
 
-

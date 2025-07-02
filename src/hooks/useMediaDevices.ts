@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react';
 export const useMediaDevices = () => {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
-
   const getResponsiveResolution = () => {
     const width = window.innerWidth;
 
