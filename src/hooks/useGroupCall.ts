@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { KurentoSignalingSocket } from '@/apis/groupcallsignal';
-import { Participant } from '@/types/webCam';
+import { KurentoSignalingSocket } from '@/libs/groupcallsignal';
+import { Participant } from '@/types/room';
 import { apiWithToken } from '@/apis/axios';
 import { DelegationUpdateResponse } from '@/types/delegation';
 
@@ -22,6 +22,7 @@ export function useGroupCall({
   // 참가자 목록 상태 및 참조
   const [participants, setParticipants] = useState<Participant[]>(initialParticipants);
   const participantsRef = useRef<Participant[]>([]);
+
   // 로컬 스트림 (캠/마이크)
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -41,21 +42,23 @@ export function useGroupCall({
     participantsRef.current = participants;
   }, [participants]);
 
-
   useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const { data: roomData } = await apiWithToken.get(`/api/room/${roomId}`);
-      const { data: participantsData } = await apiWithToken.get(`/api/room/participant/${roomId}`);
-      setParticipants(participantsData);
-      setAdminUsername(roomData.adminUsername);
-    } catch (err: any) {
-      setError(err.message || '데이터 불러오기 실패');
-    }
-  };
+    const fetchData = async () => {
+      try {
+        const { data: roomData } = await apiWithToken.get(`/api/room/${roomId}`);
+        const { data: participantsData } = await apiWithToken.get(
+          `/api/room/participant/${roomId}`,
+        );
 
-  fetchData();
-}, [roomId]);
+        setParticipants(participantsData);
+        setAdminUsername(roomData.adminUsername ?? myUsername);
+      } catch (err: any) {
+        setError(err.message || '데이터 불러오기 실패');
+      }
+    };
+
+    fetchData();
+  }, [roomId]);
 
 
   // 로컬 미디어(캠/마이크) 스트림 가져오기
@@ -66,56 +69,25 @@ export function useGroupCall({
         audio: true,
       });
       setLocalStream(mediaStream);
-
-      setParticipants((prev) => {
-        const existing = prev.find((p) => p.userId === myUserId);
-        if (existing) {
-          return prev.map((p) =>
-            p.userId === myUserId
-              ? { ...p, stream: mediaStream, camStatus: true, micStatus: true }
-              : p,
-          );
-        } else {
-          return [
-            ...prev,
-            {
-              userId: myUserId,
-              username: myUsername,
-              isWorking: true,
-              camStatus: true,
-              micStatus: true,
-              isAdmin: false,
-              stream: mediaStream,
-            },
-          ];
-        }
-      });
       return mediaStream;
     } catch (err: any) {
       setError(err.message || '카메라/마이크 접근 실패');
       throw err;
     }
-  }, [myUserId, myUsername]);
+  }, [myUserId, myUsername, adminUsername]);
 
-  // 참가자 상태 서버 전송 (작업/캠/마이크)
-  const updateParticipantStatus = useCallback(
-    (payload: { workStatus?: boolean; camStatus?: boolean; micStatus?: boolean }) => {
-      kurentoSignalingRef.current?.send(`/pub/data/work-status/${roomId}`, {
-        userId: myUserId,
-        ...payload,
-      });
-    },
-    [myUserId, roomId],
-  );
   // 작업 상태 변경 &  서버 전송
   const setParticipantWorkStatus = useCallback(
     (status: boolean) => {
       setParticipants((prev) =>
         prev.map((p) => (p.userId === myUserId ? { ...p, isWorking: status } : p)),
       );
-      updateParticipantStatus({ workStatus: status });
+      kurentoSignalingRef.current?.send(`/pub/data/work-status/${roomId}`, {
+        userId: myUserId,
+        workStatus: status,
+      });
     },
-    [updateParticipantStatus, myUserId],
+    [myUserId, roomId],
   );
 
   // 캠/마이크 토글 (켜기/끄기) 처리
@@ -128,16 +100,23 @@ export function useGroupCall({
         setParticipants((prev) =>
           prev.map((p) => (p.userId === myUserId ? { ...p, camStatus: status } : p)),
         );
-        updateParticipantStatus({ camStatus: status });
+        kurentoSignalingRef.current?.send(`/pub/data/cam-status/${roomId}`, {
+          userId: myUserId,
+          camStatus: status,
+        });
+
       } else {
         localStream.getAudioTracks().forEach((track) => (track.enabled = status));
         setParticipants((prev) =>
           prev.map((p) => (p.userId === myUserId ? { ...p, micStatus: status } : p)),
         );
-        updateParticipantStatus({ micStatus: status });
+        kurentoSignalingRef.current?.send(`/pub/data/mic-status/${roomId}`, {
+          userId: myUserId,
+          micStatus: status,
+        });
       }
     },
-    [localStream, myUserId, updateParticipantStatus],
+    [localStream, myUserId, roomId],
   );
 
   // 방장 위임 요청 전송
@@ -151,11 +130,9 @@ export function useGroupCall({
   );
 
   // 방장 위임 모달 열기
-  const openDelegationModal = useCallback(() => {
-    if (adminUsername === myUsername) {
-      setIsDelegationOpen(true);
-    }
-  }, [adminUsername, myUsername]);
+ const openDelegationModal = useCallback(() => {
+  setIsDelegationOpen(true);
+}, []);
 
   const handleSelectDelegate = useCallback((userId: number) => {
     setSelectedDelegateId(userId);
@@ -203,6 +180,12 @@ export function useGroupCall({
                   micStatus: true,
                   isAdmin: false,
                   stream: e.streams[0],
+
+                  goals: [],
+                  resolution: '',
+                  isMyGoal: false,
+                  isSecret: false,
+
                 },
               ];
             }
@@ -257,14 +240,14 @@ export function useGroupCall({
     }
   }, []);
 
-  
- // 참가자 상태 업데이트
+  // 참가자 상태 업데이트
+
   const addParticipant = (participant: Participant) => {
     setParticipants((prev) =>
       prev.some((p) => p.userId === participant.userId) ? prev : [...prev, participant],
     );
   };
- 
+
   //유저 퇴장 처리 + 피어 연결 해제
   const removeParticipant = useCallback((userId: number) => {
     setParticipants((prev) => prev.filter((p) => p.userId !== userId));
@@ -314,6 +297,22 @@ export function useGroupCall({
         try {
           const stream = await getLocalMediaStream();
           if (stream) {
+            setParticipants([
+              {
+                userId: myUserId,
+                username: myUsername,
+                isWorking: true,
+                camStatus: true,
+                micStatus: true,
+                isAdmin: true,
+                stream,
+                goals: [],
+                resolution: '',
+                isMyGoal: true,
+                isSecret: false,
+              },
+            ]);
+
             socket.send('joinRoom', { room: `room${roomId}`, name: myUsername });
             hasJoinedRoom.current = true;
           }
@@ -321,7 +320,6 @@ export function useGroupCall({
           setError('장치 접근 실패');
         }
       }
-    });
 
     socket.on(
       'ADMIN_UPDATED',
@@ -352,9 +350,14 @@ export function useGroupCall({
             username: remoteUsername,
             camStatus: true,
             micStatus: true,
-            isAdmin: false, 
+            isAdmin: remoteUsername === adminUsername,
             isWorking: true,
             stream: null,
+            goals: [],
+            resolution: '',
+            isMyGoal: false,
+            isSecret: false,
+
           },
         ]);
       }
@@ -371,52 +374,49 @@ export function useGroupCall({
     socket.on('newParticipantArrived', (msg) => {
       const { name } = msg;
       if (!name) return;
+      if (participantsRef.current.some((p) => p.username === name)) return;
+      const userId =
+        name.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) % 10000;
 
-      setParticipants((prev) => {
-        const exists = prev.find((p) => p.username === name);
-        if (exists) return prev;
+      setParticipants((prev) => [
+        ...prev,
+        {
+          userId,
+          username: name,
+          camStatus: true,
+          micStatus: true,
+          isWorking: true,
+          isAdmin: name === adminUsername,
+          stream: null,
+          goals: [],
+          resolution: '',
+          isMyGoal: false,
+          isSecret: false,
+        },
+      ]);
 
-        const userId =
-          name.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) % 10000;
-
-        return [
-          ...prev,
-          {
-            userId,
-            username: name,
-            camStatus: true,
-            micStatus: true,
-            isWorking: true,
-            isAdmin: false, 
-            stream: null,
-          },
-        ];
-      });
     });
 
     socket.on('error', (msg) => {
       setError(msg.message || '시그널링 오류');
     });
 
-    socket.on(
-      'roomParticipants',
-      (msg: { participants: Participant[]; adminUsername?: string }) => {
-        setParticipants(
-          msg.participants.map((p) => ({
-            ...p,
-            stream: null,
-          })),
-        );
-        if (msg.adminUsername) {
-          setAdminUsername(msg.adminUsername);
-        } else if (
-          msg.participants.length > 0 &&
-          !msg.participants.some((p) => p.username === adminUsername)
-        ) {
-          setAdminUsername(msg.participants[0].username);
-        }
-      },
-    );
+    socket.on('roomParticipants', (msg) => {
+      const effectiveAdmin = msg.adminUsername || msg.participants[0]?.username || '';
+      setAdminUsername(effectiveAdmin);
+
+      const myInfo = participantsRef.current.find((p: Participant) => p.userId === myUserId);
+      const others = msg.participants.filter((p: Participant) => p.userId !== myUserId);
+
+      setParticipants([
+        ...(myInfo ? [myInfo] : []),
+        ...others.map((p: Participant) => ({
+          ...p,
+          stream: null,
+          isAdmin: p.isAdmin ?? p.username === effectiveAdmin,
+        })),
+      ]);
+    });
 
     socket.on('STATUS_UPDATED', (msg) => {
       const { userId, workStatus, camStatus, micStatus } = msg;
@@ -454,15 +454,17 @@ export function useGroupCall({
   }, [roomId, myUsername, getLocalMediaStream]);
 
 
-
   return {
     participants,
     localStream,
     error,
     adminUsername,
     isDelegationOpen,
-    setAdminUsername,
     setIsDelegationOpen,
+    selectedDelegateId,
+    setSelectedDelegateId,
+    setAdminUsername,
+
     openDelegationModal,
     delegateAdmin,
     toggleMedia,

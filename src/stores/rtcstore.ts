@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { SignalingSocket } from '@/apis/signal';
+import { SignalingSocket } from '@/libs/socket';
 import { SdpAnswerResponse, IceCandidateDto } from '@/types/rtc';
 import { getAccessToken } from '@/utils/token';
 

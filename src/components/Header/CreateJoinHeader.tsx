@@ -13,12 +13,12 @@ const CreateJoinHeader = () => {
 
   const handleJoinClick = async () => {
     try {
-      await enterRoom('37', {
+      await enterRoom('38', {
         micTurnedOn: false,
         camTurnedOn: false,
       });
 
-      router.push('/room/37');
+      router.push('/room/38');
       setJoinModalOpen(true);
     } catch (error) {
       console.error('방 입장 실패:', error);

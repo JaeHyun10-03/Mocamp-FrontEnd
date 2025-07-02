@@ -11,7 +11,6 @@ export function useWebRTC({ roomId, userId }: UseWebRTCProps) {
   const [error, setError] = useState<string | null>(null);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
   const [isOfferSent, setIsOfferSent] = useState(false); 
-
   const getResponsiveResolution = () => {
   const width = window.innerWidth;
 
@@ -23,6 +22,7 @@ export function useWebRTC({ roomId, userId }: UseWebRTCProps) {
     return { width: 277, height: 144 };
   }
 };
+
 
 
   useEffect(() => {

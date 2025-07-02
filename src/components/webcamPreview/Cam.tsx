@@ -54,13 +54,10 @@ const [micStatus, setMicOn] = useState(true);
           카메라가 꺼져있습니다
         </span>
       )}
-
-
       <div className="absolute bottom-0 left-0 box-border flex w-full items-center px-[50px] pb-[33px]">
         <span className="font-pre flex-shrink-0 text-[20px] font-semibold tracking-[-0.4px] text-white">
           {user.nickname}
         </span>
-
         {/* 작업중 뱃지 & 버튼들*/}
         <div className="ml-[156px] flex items-center pr-[50px]">
           {user.isWorking && (
