@@ -8,30 +8,65 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from 'recharts';
+import { TimeItem, DailyGoal } from '@/types/myhome';
 
-const data = [
-  { date: '4.20', minutes: 50 },
-  { date: '4.21', minutes: 72 },
-  { date: '4.22', minutes: 108 },
-  { date: '4.23', minutes: 142 },
-  { date: '4.24', minutes: 108 },
-  { date: '4.25', minutes: 168 },
-  { date: '4.26', minutes: 190 },
-  { date: '4.27', minutes: 142 },
-];
+interface TimeGraphProps {
+  timeList: TimeItem[];
+  goalList: DailyGoal[];
+  onDateClick: (date: string) => void;
+  selectedDate: string | null;
+}
 
-const TimeGraph = () => {
+const TimeGraph = ({ timeList, goalList, onDateClick, selectedDate }: TimeGraphProps) => {
+  // 차트 데이터에 선택 상태 추가
+  const chartData = timeList.map((item) => ({
+    ...item,
+    isSelected: selectedDate === item.date,
+  }));
+
+  // 커스텀 도트 컴포넌트
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload } = props;
+    const isSelected = payload.isSelected;
+
+    return (
+      <circle
+        cx={cx}
+        cy={cy}
+        r={isSelected ? 6 : 4}
+        fill={isSelected ? '#1ea87a' : '#27CFA5'}
+        stroke={isSelected ? '#1ea87a' : '#27CFA5'}
+        strokeWidth={2}
+        style={{ cursor: 'pointer' }}
+        onClick={() => onDateClick(payload.date)}
+      />
+    );
+  };
+
+  // 차트 클릭 핸들러
+  const handleChartClick = (data: any) => {
+    if (data && data.activeLabel) {
+      onDateClick(data.activeLabel);
+    }
+  };
+
   return (
-    <div className="w-[553px] h-[390px]">
+    <div className="h-[390px] w-[553px]">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 20, right: 30, left: 40, bottom: 20 }}>
+        <AreaChart
+          data={chartData}
+          margin={{ top: 20, right: 30, left: 40, bottom: 20 }}
+          onClick={handleChartClick}
+        >
+          {/* 그래디언트 정의 */}
           <defs>
-            <linearGradient id="colorMinutes" x1="0" y1="0" x2="0" y2="1">
+            <linearGradient id="colorDuration" x1="0" y1="0" x2="0" y2="1">
               <stop offset="60%" stopColor="#27CFA5" stopOpacity={1} />
               <stop offset="100%" stopColor="#BEF1E4" stopOpacity={0.9} />
             </linearGradient>
           </defs>
 
+          {/* x축 */}
           <XAxis
             dataKey="date"
             axisLine={false}
@@ -40,16 +75,18 @@ const TimeGraph = () => {
             tickMargin={11.5}
           />
 
+          {/* y축 */}
           <YAxis
-            domain={[0, 210]}
-            ticks={[30, 60, 90, 120, 150, 180, 210]}
+            domain={[0, 1200]}
+            ticks={[300, 600, 900, 1200]}
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#555555', fontSize: 16 }}
-            tickFormatter={(value) => `${value}분`}
+            tickFormatter={(value) => `${value / 60}시간`}
             tickMargin={18}
           />
 
+          {/* 배경 그리드 */}
           <CartesianGrid
             stroke="#e0e0e0"
             strokeDasharray="1 1"
@@ -57,8 +94,8 @@ const TimeGraph = () => {
             vertical={false}
           />
 
-          {/* 각 데이터 포인트에서 x축까지 세로선 그리기 */}
-          {data.map((entry, index) => (
+          {/* 세로 참조선 */}
+          {timeList.map((entry, index) => (
             <ReferenceLine
               key={index}
               x={entry.date}
@@ -66,11 +103,12 @@ const TimeGraph = () => {
               strokeDasharray="1 1"
               segment={[
                 { x: entry.date, y: 0 },
-                { x: entry.date, y: entry.minutes },
+                { x: entry.date, y: entry.duration },
               ]}
             />
           ))}
 
+          {/* 툴팁 */}
           <Tooltip
             formatter={(value) => [`${value}분`, '시간']}
             labelStyle={{ color: '#666' }}
@@ -81,13 +119,14 @@ const TimeGraph = () => {
             }}
           />
 
+          {/* 영역 그래프 */}
           <Area
             type="linear"
-            dataKey="minutes"
+            dataKey="duration"
             stroke="#27CFA5"
             strokeWidth={2}
-            fill="url(#colorMinutes)"
-            dot={{ r: 4, fill: '#27CFA5', strokeWidth: 2, stroke: '#27CFA5' }}
+            fill="url(#colorDuration)"
+            dot={<CustomDot />}
             activeDot={{ r: 6, fill: '#27CFA5' }}
           />
         </AreaChart>

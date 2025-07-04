@@ -5,8 +5,12 @@ import { create } from 'zustand';
 export interface Myhome {
   profileImage: string;
   username: string;
+  goalList: [];
   roomList: Room[];
-  setMyhome: (data: Myhome) => void;
+  timeList: [];
+  totalDurationMinute: number;
+  totalNumberOfGoals: number;
+  setMyhome: (data: any) => void;
 }
 
 export interface DropDown {
@@ -15,21 +19,30 @@ export interface DropDown {
 }
 
 export interface Room {
-  status: boolean; // isComplete : true or false
-  room_name: string;
-  started_at: string;
+  roomId: number;
   duration: string;
+  status: boolean;
+  roomName: string;
+  startedAt: string;
 }
 
 export const useMyhomeStore = create<Myhome>((set) => ({
   profileImage: '',
   username: '',
+  goalList: [],
   roomList: [],
+  timeList: [],
+  totalDurationMinute: 0,
+  totalNumberOfGoals: 0,
   setMyhome: (data) =>
     set(() => ({
       profileImage: data.profileImage,
       username: data.username,
+      goalList: data.goalList,
       roomList: data.roomList,
+      timeList: data.timeList,
+      totalDurationMinute: data.totalDurationMinute,
+      totalNumberOfGoals: data.totalNumberOfGoals,
     })),
 }));
 

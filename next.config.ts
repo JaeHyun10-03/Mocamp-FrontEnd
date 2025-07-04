@@ -1,15 +1,21 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  images: {
+    domains: ['k.kakaocdn.net', 'ssl.pstatic.net', 'lh3.googleusercontent.com'], // ✅ 외부 이미지 도메인 추가
+  },
+
   async redirects() {
     return [
       // {
       //   source: '/',
-      //   destination: '/login', // 일단 바로 로그인으로 리다이렉션션
-      //   permanent: true, // 캐쉬에 남도록 하는 기능
+      //   destination: '/login',
+      //   permanent: true,
       // },
     ];
   },
+
   webpack: (config: any) => {
     config.module.rules.push({
       test: /\.svg$/i,
