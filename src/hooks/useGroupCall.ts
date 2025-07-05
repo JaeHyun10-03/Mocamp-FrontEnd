@@ -380,20 +380,19 @@ export function useGroupCall({
 
         setParticipants((prev) => [
           ...prev,
-          {
-            userId: remoteUserId,
-            username: remoteUsername,
-            camStatus,
-            micStatus,
-            isAdmin: remoteUsername === adminUsername,
-            isWorking: true,
-            isAdmin: name === adminUsername,
-            stream: null,
-            goals: [],
-            resolution: '',
-            isMyGoal: false,
-            isSecret: false,
-          },
+           {
+      userId,
+      username: name,
+      camStatus,
+      micStatus,
+      isWorking: true,
+      isAdmin: name === adminUsername,
+      stream: null,
+      goals: [],
+      resolution: '',
+      isMyGoal: false,
+      isSecret: false,
+    },
         ]);
       });
 
