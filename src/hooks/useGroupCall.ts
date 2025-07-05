@@ -132,6 +132,7 @@ export function useGroupCall({
   const openDelegationModal = useCallback(() => {
     setIsDelegationOpen(true);
   }, []);
+
   const handleSelectDelegate = useCallback((userId: number) => {
     setSelectedDelegateId(userId);
   }, []);
@@ -313,38 +314,72 @@ export function useGroupCall({
           setError('장치 접근 실패');
         }
       }
-    });
-    socket.on(
-      'ADMIN_UPDATED',
-      (msg: DelegationUpdateResponse & { type: string; previousAdminUsername: string }) => {
-        setAdminUsername(msg.newAdminUsername);
-        setParticipants((prev) =>
-          prev.map((p) => ({
-            ...p,
-            isAdmin: p.username === msg.newAdminUsername,
-          })),
-        );
-      },
-    );
 
-    socket.on('receiveVideoFrom', async (msg) => {
-      const remoteUsername = msg.sender;
-      const existing = participantsRef.current.find((p) => p.username === remoteUsername);
-      let remoteUserId =
-        existing?.userId ??
-        remoteUsername.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) %
-          10000;
+      socket.on(
+        'ADMIN_UPDATED',
+        (msg: DelegationUpdateResponse & { type: string; previousAdminUsername: string }) => {
+          setAdminUsername(msg.newAdminUsername);
+          setParticipants((prev) =>
+            prev.map((p) => ({
+              ...p,
+              isAdmin: p.username === msg.newAdminUsername,
+            })),
+          );
+        },
+      );
 
-      if (!existing) {
+      socket.on('receiveVideoFrom', async (msg) => {
+        const remoteUsername = msg.sender;
+        const existing = participantsRef.current.find((p) => p.username === remoteUsername);
+        let remoteUserId =
+          existing?.userId ??
+          remoteUsername.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) %
+            10000;
+
+        if (!existing) {
+          setParticipants((prev) => [
+            ...prev,
+            {
+              userId: remoteUserId,
+              username: remoteUsername,
+              camStatus: true,
+              micStatus: true,
+              isAdmin: remoteUsername === adminUsername,
+              isWorking: true,
+              stream: null,
+              goals: [],
+              resolution: '',
+              isMyGoal: false,
+              isSecret: false,
+            },
+          ]);
+        }
+        await receiveVideoFrom(remoteUserId, remoteUsername, msg.sdpOffer);
+      });
+
+      socket.on('iceCandidate', (msg) => addIceCandidate(msg.name, msg.candidate));
+
+      socket.on('participantLeft', (msg) => {
+        const user = participantsRef.current.find((p) => p.username === msg.name);
+        if (user) removeParticipant(user.userId);
+      });
+
+      socket.on('newParticipantArrived', (msg) => {
+        const { name } = msg;
+        if (!name) return;
+        if (participantsRef.current.some((p) => p.username === name)) return;
+        const userId =
+          name.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) % 10000;
+
         setParticipants((prev) => [
           ...prev,
           {
-            userId: remoteUserId,
-            username: remoteUsername,
+            userId,
+            username: name,
             camStatus: true,
             micStatus: true,
-            isAdmin: remoteUsername === adminUsername,
             isWorking: true,
+            isAdmin: name === adminUsername,
             stream: null,
             goals: [],
             resolution: '',
@@ -352,94 +387,65 @@ export function useGroupCall({
             isSecret: false,
           },
         ]);
-      }
-      await receiveVideoFrom(remoteUserId, remoteUsername, msg.sdpOffer);
-    });
+      });
 
-    socket.on('iceCandidate', (msg) => addIceCandidate(msg.name, msg.candidate));
+      socket.on('error', (msg) => {
+        setError(msg.message || '시그널링 오류');
+      });
 
-    socket.on('participantLeft', (msg) => {
-      const user = participantsRef.current.find((p) => p.username === msg.name);
-      if (user) removeParticipant(user.userId);
-    });
+      socket.on('roomParticipants', (msg) => {
+        const effectiveAdmin = msg.adminUsername || msg.participants[0]?.username || '';
+        setAdminUsername(effectiveAdmin);
 
-    socket.on('newParticipantArrived', (msg) => {
-      const { name } = msg;
-      if (!name) return;
+        const myInfo = participantsRef.current.find((p: Participant) => p.userId === myUserId);
+        const others = msg.participants.filter((p: Participant) => p.userId !== myUserId);
 
-      if (participantsRef.current.some((p) => p.username === name)) return;
-      const userId =
-        name.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) % 10000;
+        setParticipants([
+          ...(myInfo ? [myInfo] : []),
+          ...others.map((p: Participant) => ({
+            ...p,
+            stream: null,
+            isAdmin: p.isAdmin ?? p.username === effectiveAdmin,
+          })),
+        ]);
+      });
 
-      setParticipants((prev) => [
-        ...prev,
-        {
-          userId,
-          username: name,
-          camStatus: true,
-          micStatus: true,
-          isWorking: true,
-          isAdmin: name === adminUsername,
-          stream: null,
-          goals: [],
-          resolution: '',
-          isMyGoal: false,
-          isSecret: false,
-        },
-      ]);
-    });
-
-    socket.on('error', (msg) => {
-      setError(msg.message || '시그널링 오류');
-    });
-
-    socket.on('roomParticipants', (msg) => {
-      const effectiveAdmin = msg.adminUsername || msg.participants[0]?.username || '';
-      setAdminUsername(effectiveAdmin);
-
-      const myInfo = participantsRef.current.find((p: Participant) => p.userId === myUserId);
-      const others = msg.participants.filter((p: Participant) => p.userId !== myUserId);
-
-      setParticipants([
-        ...(myInfo ? [myInfo] : []),
-        ...others.map((p: Participant) => ({
-          ...p,
-          stream: null,
-          isAdmin: p.isAdmin ?? p.username === effectiveAdmin,
-        })),
-      ]);
-    });
-
-    socket.on('STATUS_UPDATED', (msg) => {
-      const { userId, workStatus, camStatus, micStatus } = msg;
-      setParticipants((prev) =>
-        prev.map((p) =>
-          p.userId === userId ? { ...p, isWorking: workStatus, camStatus, micStatus } : p,
-        ),
-      );
-    });
-
-    socket.on(
-      'WORK_STATUS_UPDATED',
-      (msg: { type: string; userId: number; workStatus: boolean }) => {
+      socket.on('STATUS_UPDATED', (msg) => {
+        const { userId, workStatus, camStatus, micStatus } = msg;
         setParticipants((prev) =>
-          prev.map((p) => (p.userId === msg.userId ? { ...p, isWorking: msg.workStatus } : p)),
+          prev.map((p) =>
+            p.userId === userId ? { ...p, isWorking: workStatus, camStatus, micStatus } : p,
+          ),
         );
-      },
-    );
+      });
 
-    socket.on('CAM_STATUS_UPDATED', (msg: { type: string; userId: number; camStatus: boolean }) => {
-      setParticipants((prev) =>
-        prev.map((p) => (p.userId === msg.userId ? { ...p, camStatus: msg.camStatus } : p)),
+      socket.on(
+        'WORK_STATUS_UPDATED',
+        (msg: { type: string; userId: number; workStatus: boolean }) => {
+          setParticipants((prev) =>
+            prev.map((p) => (p.userId === msg.userId ? { ...p, isWorking: msg.workStatus } : p)),
+          );
+        },
+      );
+
+      socket.on(
+        'CAM_STATUS_UPDATED',
+        (msg: { type: string; userId: number; camStatus: boolean }) => {
+          setParticipants((prev) =>
+            prev.map((p) => (p.userId === msg.userId ? { ...p, camStatus: msg.camStatus } : p)),
+          );
+        },
+      );
+
+      socket.on(
+        'MIC_STATUS_UPDATED',
+        (msg: { type: string; userId: number; micStatus: boolean }) => {
+          setParticipants((prev) =>
+            prev.map((p) => (p.userId === msg.userId ? { ...p, micStatus: msg.micStatus } : p)),
+          );
+        },
       );
     });
-
-    socket.on('MIC_STATUS_UPDATED', (msg: { type: string; userId: number; micStatus: boolean }) => {
-      setParticipants((prev) =>
-        prev.map((p) => (p.userId === msg.userId ? { ...p, micStatus: msg.micStatus } : p)),
-      );
-    });
-
     return () => {
       socket.close();
     };

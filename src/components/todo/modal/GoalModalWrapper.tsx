@@ -1,109 +1,472 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { KurentoSignalingSocket } from '@/libs/groupcallsignal';
+import { Participant } from '@/types/room';
+import { apiWithToken } from '@/apis/axios';
+import { DelegationUpdateResponse } from '@/types/delegation';
 
-import ModalLayout from '@/components/common/modal/ModalLayout';
-import GoalModalContent from './GoalModalContent';
-
-import UnlockButton from '@/public/svgs/UnlockIcon.svg';
-import LockButton from '@/public/svgs/LockIcon.svg';
-
-import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
-import { Todo } from '@/types/todo';
-
-interface GoalModalWrapperProps {
-  onClose: () => void;
-  mode: 'add' | 'edit';
-  todos?: Todo[];
-  onSubmit: (updatedTodos: Todo[]) => void;
-  roomId: string;
-  isSecret: boolean;
+interface UseGroupCallProps {
+  roomId: number;
+  myUserId: number;
+  myUsername: string;
+  camStatus: boolean;
+  micStatus: boolean;
+  initialParticipants?: Participant[];
+  onRoomLeft?: () => void;
 }
 
-const GoalModalWrapper = ({
-  onClose,
-  mode,
-  todos = [],
-  onSubmit,
+export function useGroupCall({
   roomId,
-  isSecret,
-}: GoalModalWrapperProps) => {
-  const [currentTodos, setCurrentTodos] = useState<Todo[]>(todos);
-  const { updateGoals } = useRoomPublisher(roomId);
-  const [isPrivate, setIsPrivate] = useState(isSecret);
+  myUserId,
+  myUsername,
+  camStatus,
+  micStatus,
+  initialParticipants = [],
+  onRoomLeft,
+}: UseGroupCallProps) {
+  // 참가자 목록 상태 및 참조
+  const [participants, setParticipants] = useState<Participant[]>(initialParticipants);
+  const participantsRef = useRef<Participant[]>([]);
 
-  const handleAddTodo = () => {
-    setCurrentTodos((prev) => [
-      {
-        goalId: Date.now(),
-        content: '',
-        isCompleted: false,
-      },
-      ...prev,
-    ]);
-  };
+  // 로컬 스트림 (캠/마이크)
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    const filtered = currentTodos.filter((todo) => todo.content.trim() !== '');
+  // 방장 정보
+  const [adminUsername, setAdminUsername] = useState<string>(myUsername);
+  const [isDelegationOpen, setIsDelegationOpen] = useState<boolean>(false);
+  const [selectedDelegateId, setSelectedDelegateId] = useState<number | null>(null);
 
-    const createGoals = filtered
-      .filter((todo) => !todos.some((t) => t.goalId === todo.goalId))
-      .map((todo) => ({ content: todo.content }));
+  // 피어 연결 및 시그널링 소켓 참조
+  const peerConnections = useRef<{ [userId: number]: RTCPeerConnection }>({});
+  const kurentoSignalingRef = useRef<KurentoSignalingSocket | null>(null);
+  const hasJoinedRoom = useRef(false);
 
-    const deleteGoals = todos
-      .filter((t) => !filtered.some((todo) => todo.goalId === t.goalId))
-      .map((t) => {
-        const idAsNumber = Number(t.goalId);
-        return isNaN(idAsNumber) ? undefined : idAsNumber;
-      })
-      .filter((id): id is number => id !== undefined);
+  // 참가자 최신 상태 유지
+  useEffect(() => {
+    participantsRef.current = participants;
+  }, [participants]);
 
-    updateGoals(createGoals, deleteGoals, isPrivate);
-    onSubmit(filtered);
-    onClose();
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data: roomData } = await apiWithToken.get(`/api/room/${roomId}`);
+        const { data: participantsData } = await apiWithToken.get(
+          `/api/room/participant/${roomId}`,
+        );
 
-  return (
-    <ModalLayout
-      onClose={onClose}
-      className="h-[470px] w-[352px] lg:h-[660px] lg:w-[495px] xl:h-[880px] xl:w-[660px]"
-    >
-      <button
-        className="absolute top-[21.67px] right-[21.67px] h-4 w-4 cursor-pointer lg:top-[37.5px] lg:right-[37.5px] lg:h-[22.5px] lg:w-[22.5px] xl:top-[50px] xl:right-[50px] xl:h-[30px] xl:w-[30px]"
-        onClick={() => setIsPrivate((prev) => !prev)}
-      >
-        {isPrivate ? <LockButton /> : <UnlockButton />}
-      </button>
+        setParticipants(participantsData);
+        setAdminUsername(roomData.adminUsername ?? myUsername);
+      } catch (err: any) {
+        setError(err.message || '데이터 불러오기 실패');
+      }
+    };
 
-      {/* 헤더 */}
-      <div className="mb-[26.87px] flex flex-col gap-[5.6px] lg:mb-[37.25px] lg:gap-[7px] xl:mb-[50px] xl:gap-[10px]">
-        <div className="flex w-[530px] justify-between">
-          <span className="text-gray9 text-[17.067px] font-semibold lg:text-2xl xl:text-[32px]">
-            나의 목표 관리
-          </span>
-        </div>
-        <span className="text-gray7 text-[9.6px] font-semibold lg:text-[13.5px] xl:text-lg">
-          나의 목표를 자유롭게 설정할 수 있어요
-        </span>
-      </div>
+    fetchData();
+  }, [roomId]);
 
-      <GoalModalContent todos={currentTodos} setTodos={setCurrentTodos} mode={mode} />
+  // 로컬 미디어(캠/마이크) 스트림 가져오기
+  const getLocalMediaStream = useCallback(async () => {
+    try {
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: { width: 480, height: 270 },
+        audio: micStatus,
+      });
 
-      {/* 하단 버튼 */}
-      <div className="absolute bottom-[26.67px] flex h-[44.8px] w-full items-center gap-[10.67px] lg:bottom-[37.5px] lg:h-16 lg:gap-[15px] xl:bottom-[50px] xl:h-[84px] xl:gap-5">
-        <button
-          onClick={handleAddTodo}
-          className="h-full w-[99.67px] rounded-[5.333px] border border-[#e8e8e8] bg-white text-[10.67px] font-semibold tracking-[-0.02em] text-[#27cfa5] lg:w-[140px] lg:rounded-[7.5px] lg:text-[15px] xl:w-[187px] xl:rounded-[10px] xl:text-[18px]"
-        >
-          목표 생성하기
-        </button>
-        <button
-          onClick={handleSubmit}
-          className="h-full w-[188.267px] rounded-[10px] bg-[#27cfa5] text-[10.67px] font-semibold text-white lg:w-[264.75px] lg:text-[15px] xl:w-[353px] xl:text-[20px]"
-        >
-          완료하기
-        </button>
-      </div>
-    </ModalLayout>
+      if (!camStatus) {
+        mediaStream.getVideoTracks().forEach((track) => (track.enabled = false));
+      }
+
+      return mediaStream;
+    } catch (err: any) {
+      setError(err.message || '카메라/마이크 접근 실패');
+      throw err;
+    }
+  }, [camStatus, micStatus, myUserId, myUsername, adminUsername]);
+
+  // 작업 상태 변경 &  서버 전송
+  const setParticipantWorkStatus = useCallback(
+    (status: boolean) => {
+      setParticipants((prev) =>
+        prev.map((p) => (p.userId === myUserId ? { ...p, isWorking: status } : p)),
+      );
+      kurentoSignalingRef.current?.send(`/pub/data/work-status/${roomId}`, {
+        userId: myUserId,
+        workStatus: status,
+      });
+    },
+    [myUserId, roomId],
   );
-};
+  // 캠/마이크 토글 (켜기/끄기) 처리
+  const toggleMedia = useCallback(
+    (type: 'video' | 'audio', status: boolean) => {
+      if (!localStream) return;
 
-export default GoalModalWrapper;
+      if (type === 'video') {
+        localStream.getVideoTracks().forEach((track) => (track.enabled = status));
+        setParticipants((prev) =>
+          prev.map((p) => (p.userId === myUserId ? { ...p, camStatus: status } : p)),
+        );
+
+        kurentoSignalingRef.current?.send(`/pub/data/cam-status/${roomId}`, {
+          userId: myUserId,
+          camStatus: status,
+        });
+      } else {
+        localStream.getAudioTracks().forEach((track) => (track.enabled = status));
+        setParticipants((prev) =>
+          prev.map((p) => (p.userId === myUserId ? { ...p, micStatus: status } : p)),
+        );
+
+        kurentoSignalingRef.current?.send(`/pub/data/mic-status/${roomId}`, {
+          userId: myUserId,
+          micStatus: status,
+        });
+      }
+    },
+    [localStream, myUserId, roomId],
+  );
+  // 방장 위임 요청 전송
+  const delegateAdmin = useCallback(
+    (newAdminId: number) => {
+      kurentoSignalingRef.current?.send(`/pub/data/delegation/${roomId}`, {
+        newAdminId,
+      });
+    },
+    [roomId],
+  );
+
+  // 방장 위임 모달 열기
+  const openDelegationModal = useCallback(() => {
+    setIsDelegationOpen(true);
+  }, []);
+  const handleSelectDelegate = useCallback((userId: number) => {
+    setSelectedDelegateId(userId);
+  }, []);
+
+  // 유저와 P2P 연결 생성(피어 생성) + onicecandidate, ontrack 핸들링
+  const createPeerConnection = useCallback(
+    async (remoteUserId: number, remoteUsername: string, stream: MediaStream) => {
+      const pc = new RTCPeerConnection({
+        iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      });
+      peerConnections.current[remoteUserId] = pc;
+
+      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+
+      pc.onicecandidate = (e) => {
+        if (e.candidate) {
+          kurentoSignalingRef.current?.send('onIceCandidate', {
+            candidate: {
+              candidate: e.candidate.candidate,
+              sdpMid: e.candidate.sdpMid,
+              sdpMLineIndex: e.candidate.sdpMLineIndex,
+            },
+            name: myUsername,
+          });
+        }
+      };
+
+      pc.ontrack = (e) => {
+        if (e.streams && e.streams[0]) {
+          setParticipants((prev) => {
+            const existing = prev.find((p) => p.userId === remoteUserId);
+            if (existing) {
+              return prev.map((p) =>
+                p.userId === remoteUserId ? { ...p, stream: e.streams[0] } : p,
+              );
+            } else {
+              return [
+                ...prev,
+                {
+                  userId: remoteUserId,
+                  username: remoteUsername,
+                  isWorking: false,
+                  camStatus: true,
+                  micStatus: true,
+                  isAdmin: false,
+                  stream: e.streams[0],
+                  goals: [],
+                  resolution: '',
+                  isMyGoal: false,
+                  isSecret: false,
+                },
+              ];
+            }
+          });
+        }
+      };
+
+      return pc;
+    },
+    [myUsername],
+  );
+
+  //원격 유저의 sdpOffer 수신 시 SDP & answer 전송
+  const receiveVideoFrom = useCallback(
+    async (remoteUserId: number, remoteUsername: string, sdpOffer: string) => {
+      let pc = peerConnections.current[remoteUserId];
+      if (!pc) {
+        const streamToUse = localStream || (await getLocalMediaStream());
+        if (!streamToUse) return;
+        pc = await createPeerConnection(remoteUserId, remoteUsername, streamToUse);
+      }
+
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription({ type: 'offer', sdp: sdpOffer }));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
+        kurentoSignalingRef.current?.send('answer', {
+          name: myUsername,
+          sdpAnswer: answer.sdp,
+        });
+      } catch (e) {
+        console.error('[Kurento] SDP 처리 실패:', e);
+      }
+    },
+    [createPeerConnection, localStream, getLocalMediaStream, myUsername],
+  );
+
+  //ICE Candidate 수신 시 피어 연결 추가
+  const addIceCandidate = useCallback((username: string, candidate: any) => {
+    const user = participantsRef.current.find((p) => p.username === username);
+    if (!user) return;
+
+    const pc = peerConnections.current[user.userId];
+    if (pc && candidate) {
+      try {
+        pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.error('[Kurento] ICE 추가 실패:', e);
+      }
+    }
+  }, []);
+
+  // 참가자 상태 업데이트
+  const addParticipant = (participant: Participant) => {
+    setParticipants((prev) =>
+      prev.some((p) => p.userId === participant.userId) ? prev : [...prev, participant],
+    );
+  };
+
+  //유저 퇴장 처리 + 피어 연결 해제
+  const removeParticipant = useCallback((userId: number) => {
+    setParticipants((prev) => prev.filter((p) => p.userId !== userId));
+    const pc = peerConnections.current[userId];
+    if (pc) {
+      pc.close();
+      delete peerConnections.current[userId];
+    }
+  }, []);
+
+  // 방 퇴장 처리, 로컬 트랙 stop, 연결 해제, 상태 초기화
+  const leaveRoom = useCallback(async () => {
+    if (kurentoSignalingRef.current) {
+      kurentoSignalingRef.current.send('leaveRoom');
+      kurentoSignalingRef.current.close();
+      kurentoSignalingRef.current = null;
+    }
+
+    if (localStream) {
+      localStream.getTracks().forEach((t) => t.stop());
+      setLocalStream(null);
+    }
+
+    Object.values(peerConnections.current).forEach((pc) => pc.close());
+    peerConnections.current = {};
+    setParticipants([]);
+    hasJoinedRoom.current = false;
+    setError(null);
+
+    if (onRoomLeft) onRoomLeft();
+  }, [localStream, roomId, onRoomLeft]);
+
+  // 소켓 연결 후 초기 참가 및 각 시그널링 메시지 처리
+  useEffect(() => {
+    if (!adminUsername && myUserId === 1) {
+      setAdminUsername(myUsername);
+    }
+  }, [adminUsername, myUserId, myUsername]);
+
+  useEffect(() => {
+    const socket = new KurentoSignalingSocket();
+    kurentoSignalingRef.current = socket;
+    socket.connect();
+
+    socket.setOnOpenCallback(async () => {
+      if (!hasJoinedRoom.current) {
+        try {
+          const stream = await getLocalMediaStream();
+          if (stream) {
+            setParticipants([
+              {
+                userId: myUserId,
+                username: myUsername,
+                isWorking: true,
+                camStatus,
+                micStatus,
+                isAdmin: true,
+                stream,
+                goals: [],
+                resolution: '',
+                isMyGoal: true,
+                isSecret: false,
+              },
+            ]);
+            socket.send('joinRoom', { room: `room${roomId}`, name: myUsername });
+            hasJoinedRoom.current = true;
+          }
+        } catch (e) {
+          setError('장치 접근 실패');
+        }
+      }
+    });
+    socket.on(
+      'ADMIN_UPDATED',
+      (msg: DelegationUpdateResponse & { type: string; previousAdminUsername: string }) => {
+        setAdminUsername(msg.newAdminUsername);
+        setParticipants((prev) =>
+          prev.map((p) => ({
+            ...p,
+            isAdmin: p.username === msg.newAdminUsername,
+          })),
+        );
+      },
+    );
+
+    socket.on('receiveVideoFrom', async (msg) => {
+      const remoteUsername = msg.sender;
+      const existing = participantsRef.current.find((p) => p.username === remoteUsername);
+      let remoteUserId =
+        existing?.userId ??
+        remoteUsername.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) %
+          10000;
+
+      if (!existing) {
+        setParticipants((prev) => [
+          ...prev,
+          {
+            userId: remoteUserId,
+            username: remoteUsername,
+            camStatus,
+            micStatus,
+            isAdmin: remoteUsername === adminUsername,
+            isWorking: true,
+            stream: null,
+            goals: [],
+            resolution: '',
+            isMyGoal: false,
+            isSecret: false,
+          },
+        ]);
+      }
+      await receiveVideoFrom(remoteUserId, remoteUsername, msg.sdpOffer);
+    });
+
+    socket.on('iceCandidate', (msg) => addIceCandidate(msg.name, msg.candidate));
+
+    socket.on('participantLeft', (msg) => {
+      const user = participantsRef.current.find((p) => p.username === msg.name);
+      if (user) removeParticipant(user.userId);
+    });
+
+    socket.on('newParticipantArrived', (msg) => {
+      const { name } = msg;
+      if (!name) return;
+
+      if (participantsRef.current.some((p) => p.username === name)) return;
+      const userId =
+        name.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) % 10000;
+
+      setParticipants((prev) => [
+        ...prev,
+        {
+          userId,
+          username: name,
+          camStatus,
+          micStatus,
+          isWorking: true,
+          isAdmin: name === adminUsername,
+          stream: null,
+          goals: [],
+          resolution: '',
+          isMyGoal: false,
+          isSecret: false,
+        },
+      ]);
+    });
+
+    socket.on('error', (msg) => {
+      setError(msg.message || '시그널링 오류');
+    });
+
+    socket.on('roomParticipants', (msg) => {
+      const effectiveAdmin = msg.adminUsername || msg.participants[0]?.username || '';
+      setAdminUsername(effectiveAdmin);
+
+      const myInfo = participantsRef.current.find((p: Participant) => p.userId === myUserId);
+      const others = msg.participants.filter((p: Participant) => p.userId !== myUserId);
+
+      setParticipants([
+        ...(myInfo ? [myInfo] : []),
+        ...others.map((p: Participant) => ({
+          ...p,
+          stream: null,
+          isAdmin: p.isAdmin ?? p.username === effectiveAdmin,
+        })),
+      ]);
+    });
+
+    socket.on('STATUS_UPDATED', (msg) => {
+      const { userId, workStatus, camStatus, micStatus } = msg;
+      setParticipants((prev) =>
+        prev.map((p) =>
+          p.userId === userId ? { ...p, isWorking: workStatus, camStatus, micStatus } : p,
+        ),
+      );
+    });
+
+    socket.on(
+      'WORK_STATUS_UPDATED',
+      (msg: { type: string; userId: number; workStatus: boolean }) => {
+        setParticipants((prev) =>
+          prev.map((p) => (p.userId === msg.userId ? { ...p, isWorking: msg.workStatus } : p)),
+        );
+      },
+    );
+
+    socket.on('CAM_STATUS_UPDATED', (msg: { type: string; userId: number; camStatus: boolean }) => {
+      setParticipants((prev) =>
+        prev.map((p) => (p.userId === msg.userId ? { ...p, camStatus: msg.camStatus } : p)),
+      );
+    });
+
+    socket.on('MIC_STATUS_UPDATED', (msg: { type: string; userId: number; micStatus: boolean }) => {
+      setParticipants((prev) =>
+        prev.map((p) => (p.userId === msg.userId ? { ...p, micStatus: msg.micStatus } : p)),
+      );
+    });
+
+    return () => {
+      socket.close();
+    };
+  }, [roomId, myUsername, getLocalMediaStream]);
+
+  return {
+    participants,
+    localStream,
+    error,
+    adminUsername,
+    isDelegationOpen,
+    setIsDelegationOpen,
+    selectedDelegateId,
+    setSelectedDelegateId,
+    setAdminUsername,
+    openDelegationModal,
+    delegateAdmin,
+    toggleMedia,
+    leaveRoom,
+    addParticipant,
+    setParticipantWorkStatus,
+  };
+}

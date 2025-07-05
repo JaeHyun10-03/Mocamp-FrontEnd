@@ -28,10 +28,10 @@ const ImageUploadBox = ({ label, onImageSelect, errorMessage }: ImageUploadBoxPr
 
   const handleResetToDefault = async () => {
     try {
-      const response = await fetch('/svgs/defaultProfile.svg');
+      const response = await fetch('/svgs/DefaultProfile.svg');
       const blob = await response.blob();
 
-      const defaultFile = new File([blob], 'defaultProfile.svg', {
+      const defaultFile = new File([blob], 'DefaultProfile.svg', {
         type: blob.type,
       });
 

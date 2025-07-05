@@ -56,8 +56,10 @@ const CommonModal = ({
         />
         <button
           className={clsx(
-            'h-[44.8px] w-[298.667px] rounded-[5.333px] text-[10.67px] font-semibold text-white transition-colors duration-200 lg:h-[63px] lg:w-105 lg:rounded-[7.5px] lg:text-[15px] xl:h-[84px] xl:w-[560px] xl:rounded-[10px] xl:text-xl',
-            isActive ? 'bg-primary cursor-pointer' : 'cursor-not-allowed bg-[#e9e9e9]',
+            'h-[44.8px] w-[298.667px] rounded-[5.333px] text-[10.67px] font-semibold transition-colors duration-200 lg:h-[63px] lg:w-105 lg:rounded-[7.5px] lg:text-[15px] xl:h-[84px] xl:w-[560px] xl:rounded-[10px] xl:text-xl',
+            isActive
+              ? 'bg-primary cursor-pointer text-white'
+              : 'bg-gray3 text-gray6 cursor-not-allowed',
           )}
           disabled={!isActive}
           onClick={() => {

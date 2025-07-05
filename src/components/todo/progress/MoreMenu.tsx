@@ -38,8 +38,8 @@ const MoreMenu = ({ onEditGoal, onEditCommitment }: MoreMenuProps) => {
             className="flex cursor-pointer items-center gap-[4.8px] lg:gap-[6.75px] xl:gap-[9px]"
             onClick={onEditCommitment}
           >
-            <PencilIcon className="h-2 w-[11.2px] lg:h-[11.25px] lg:w-[15.75px] xl:h-[15px] xl:w-[21px]" />
-            <button className="w-full text-[8.533px] font-medium lg:text-xs xl:text-base">
+            <PencilIcon className="h-2 w-[11.2px] cursor-pointer lg:h-[11.25px] lg:w-[15.75px] xl:h-[15px] xl:w-[21px]" />
+            <button className="w-full cursor-pointer text-[8.533px] font-medium lg:text-xs xl:text-base">
               다짐 수정하기
             </button>
           </div>
@@ -51,8 +51,8 @@ const MoreMenu = ({ onEditGoal, onEditCommitment }: MoreMenuProps) => {
               onEditGoal();
             }}
           >
-            <PencilIcon className="h-2 w-[11.2px] lg:h-[11.25px] lg:w-[15.75px] xl:h-[15px] xl:w-[21px]" />
-            <button className="w-full text-[8.533px] font-medium lg:text-xs xl:text-base">
+            <PencilIcon className="h-2 w-[11.2px] cursor-pointer lg:h-[11.25px] lg:w-[15.75px] xl:h-[15px] xl:w-[21px]" />
+            <button className="w-full cursor-pointer text-[8.533px] font-medium lg:text-xs xl:text-base">
               목표 수정하기
             </button>
           </div>
