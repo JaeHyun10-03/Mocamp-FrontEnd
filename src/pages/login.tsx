@@ -50,16 +50,18 @@ const LoginPage: NextPage = () => {
   }, [platform]);
 
   return (
-    <div className="flex h-screen w-screen bg-[#ffffff]">
-      <div className="mx-auto flex h-full flex-col items-center justify-center bg-[#ffffff]">
-        <MocampIcon />
-        <div className="mt-[1.875rem] mb-[8.4375rem] text-[1.75rem] leading-[1.6] font-medium">
+    <div className="flex h-screen w-screen bg-white">
+      <div className="mx-auto flex h-full flex-col items-center justify-center bg-white">
+        <MocampIcon className="h-[3.363rem] w-[8.333rem] lg:h-[4.729rem] lg:w-[11.719rem] xl:h-[6.306rem] xl:w-[15.625rem]" />
+
+        <div className="mt-[1rem] mb-[4.502rem] text-[0.933rem] leading-[1.6] font-medium lg:mt-[1.409rem] lg:mb-[6.3rem] lg:text-[1.313rem] xl:mt-[1.875rem] xl:mb-[8.4375rem] xl:text-[1.75rem]">
           <p>
             모캠프는 <span className="font-semibold text-[#27CFA5]">로그인</span> 후
           </p>
           <p>시작할 수 있어요 :D</p>
         </div>
-        <div className="flex w-[37.5rem] flex-col gap-5">
+
+        <div className="flex w-80 flex-col gap-[0.667rem] lg:w-[28.125rem] lg:gap-[0.938rem] xl:w-[37.5rem] xl:gap-5">
           <NaverLoginButton />
           <KakaoLoginButton />
           <GoogleLoginButton />
