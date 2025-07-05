@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import WebCamMedia from './WebCamMedia';
 import WebcamCamera from '@/public/svgs/webcamcamera.svg';
 import VoiceIcon from '@/public/svgs/VoiceIcon.svg';
-import { UserInfo } from '../../types/preview';
+import { UserInfo } from '@/types/room';
 
 interface CamProps {
   user: UserInfo;
@@ -14,8 +14,7 @@ interface CamProps {
 
 const WebCamSection = ({ user, stream, error, roomId, onStatusChange }: CamProps) => {
   const [camStatus, setCameraOn] = useState(true);
-const [micStatus, setMicOn] = useState(true);
-
+  const [micStatus, setMicOn] = useState(true);
 
   useEffect(() => {
     stream?.getVideoTracks().forEach((track) => {
@@ -54,14 +53,16 @@ const [micStatus, setMicOn] = useState(true);
           카메라가 꺼져있습니다
         </span>
       )}
-      <div className="absolute bottom-0 left-0 box-border flex w-full items-center px-[50px] pb-[33px]">
-        <span className="font-pre flex-shrink-0 text-[20px] font-semibold tracking-[-0.4px] text-white">
+      <div className="absolute bottom-0 left-0 box-border flex w-full items-center px-[20px] pb-[16px] lg:px-[40px] lg:pb-[24px] xl:px-[50px] xl:pb-[33px]">
+        {/* 유저 닉네임 */}
+        <span className="font-pre flex-shrink-0 text-[14px] font-semibold tracking-[-0.4px] text-white lg:text-[18px] xl:text-[20px]">
           {user.nickname}
         </span>
-        {/* 작업중 뱃지 & 버튼들*/}
-        <div className="ml-[156px] flex items-center pr-[50px]">
+
+        {/* 작업 중 뱃지 + 버튼 */}
+        <div className="ml-auto flex items-center gap-[6px] lg:gap-[10px] xl:gap-[15px]">
           {user.isWorking && (
-            <span className="font-pre flex h-[40px] w-[107px] items-center justify-center rounded-[5px] bg-[rgba(39,207,165,0.80)] px-[20px] py-[10px] text-[16px] font-semibold tracking-[-0.32px] text-white backdrop-blur-[2px]">
+            <span className="font-pre flex h-[24px] w-[72px] items-center justify-center rounded-[3.5px] bg-[rgba(39,207,165,0.80)] text-[12px] font-semibold tracking-[-0.24px] text-white backdrop-blur-[2px] lg:h-[30px] lg:w-[90px] lg:text-[14px] lg:tracking-[-0.28px] xl:h-[40px] xl:w-[107px] xl:text-[16px] xl:tracking-[-0.32px]">
               작업 중
             </span>
           )}
@@ -69,20 +70,25 @@ const [micStatus, setMicOn] = useState(true);
           {/* 카메라 버튼 */}
           <button
             onClick={toggleCamera}
-            className="ml-[15px] flex h-[40px] w-[40px] items-center justify-center rounded bg-[rgba(95,95,95,0.50)] backdrop-blur-[2px]"
+            className="flex h-[30px] w-[30px] items-center justify-center rounded bg-[rgba(95,95,95,0.50)] backdrop-blur-[2px] lg:h-[36px] lg:w-[36px] xl:h-[40px] xl:w-[40px]"
           >
-            <WebcamCamera width={24} height={24} style={{ opacity: camStatus ? 1 : 0.2 }} />
+            <WebcamCamera
+              width={20}
+              height={20}
+              className="lg:h-[22px] lg:w-[22px] xl:h-[24px] xl:w-[24px]"
+              style={{ opacity: camStatus ? 1 : 0.2 }}
+            />
           </button>
 
           {/* 마이크 버튼 */}
           <button
             onClick={toggleMic}
-            className="relative ml-[10px] flex h-[40px] w-[40px] items-center justify-center rounded bg-[rgba(95,95,95,0.50)] backdrop-blur-[2px]"
+            className="flex h-[30px] w-[30px] items-center justify-center rounded bg-[rgba(95,95,95,0.50)] backdrop-blur-[2px] lg:h-[36px] lg:w-[36px] xl:h-[40px] xl:w-[40px]"
           >
             <VoiceIcon
               width={14}
               height={20}
-              className="absolute top-[10px] right-[13px] bottom-[10px] left-[13px]"
+              className="translate-x-[2px] translate-y-[2px] lg:h-[22px] lg:w-[16px] xl:h-[24px] xl:w-[20px]"
               style={{ opacity: micStatus ? 1 : 0.2 }}
             />
           </button>

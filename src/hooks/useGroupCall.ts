@@ -8,6 +8,8 @@ interface UseGroupCallProps {
   roomId: number;
   myUserId: number;
   myUsername: string;
+  camStatus: boolean;
+  micStatus: boolean;
   initialParticipants?: Participant[];
   onRoomLeft?: () => void;
 }
@@ -16,6 +18,8 @@ export function useGroupCall({
   roomId,
   myUserId,
   myUsername,
+  camStatus,
+  micStatus,
   initialParticipants = [],
   onRoomLeft,
 }: UseGroupCallProps) {
@@ -65,16 +69,19 @@ export function useGroupCall({
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { width: 480, height: 270 },
-        audio: true,
+        audio: micStatus,
       });
-      setLocalStream(mediaStream);
+
+      if (!camStatus) {
+        mediaStream.getVideoTracks().forEach((track) => (track.enabled = false));
+      }
 
       return mediaStream;
     } catch (err: any) {
       setError(err.message || '카메라/마이크 접근 실패');
       throw err;
     }
-  }, [myUserId, myUsername, adminUsername]);
+  }, [camStatus, micStatus, myUserId, myUsername, adminUsername]);
 
   // 작업 상태 변경 &  서버 전송
   const setParticipantWorkStatus = useCallback(
@@ -297,8 +304,8 @@ export function useGroupCall({
                 userId: myUserId,
                 username: myUsername,
                 isWorking: true,
-                camStatus: true,
-                micStatus: true,
+                camStatus,
+                micStatus,
                 isAdmin: true,
                 stream,
                 goals: [],
@@ -374,10 +381,11 @@ export function useGroupCall({
         setParticipants((prev) => [
           ...prev,
           {
-            userId,
-            username: name,
-            camStatus: true,
-            micStatus: true,
+            userId: remoteUserId,
+            username: remoteUsername,
+            camStatus,
+            micStatus,
+            isAdmin: remoteUsername === adminUsername,
             isWorking: true,
             isAdmin: name === adminUsername,
             stream: null,
@@ -389,9 +397,35 @@ export function useGroupCall({
         ]);
       });
 
+    socket.on('newParticipantArrived', (msg) => {
+      const { name } = msg;
+      if (!name) return;
+
+      if (participantsRef.current.some((p) => p.username === name)) return;
+      const userId =
+        name.split('').reduce((acc: number, c: string) => acc + c.charCodeAt(0), 0) % 10000;
+
+      setParticipants((prev) => [
+        ...prev,
+        {
+          userId,
+          username: name,
+          camStatus,
+          micStatus,
+          isWorking: true,
+          isAdmin: name === adminUsername,
+          stream: null,
+          goals: [],
+          resolution: '',
+          isMyGoal: false,
+          isSecret: false,
+        },
+      ]);
+    });
       socket.on('error', (msg) => {
         setError(msg.message || '시그널링 오류');
       });
+
 
       socket.on('roomParticipants', (msg) => {
         const effectiveAdmin = msg.adminUsername || msg.participants[0]?.username || '';

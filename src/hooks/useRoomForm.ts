@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
+import { CreateRoomFormData } from '@/types/create';
 import { roomFormSchema } from 'src/schemas/roomFormSchema';
 
 export interface RoomFormInput {
@@ -12,9 +13,25 @@ export interface RoomFormInput {
   imageFile: File | null;
 }
 
-export const useRoomForm = () => {
-  const [micOn, setMicOn] = useState(true);
-  const [imageFile, setImageFile] = useState<File | null>(null);
+export const useRoomForm = (initialData?: CreateRoomFormData) => {
+  const { roomName, capacity, duration, image, micAvailability } = initialData || {};
+
+  const [hour = '', minute = ''] = duration?.split(':') ?? [];
+
+  const [micOn, setMicOn] = useState(micAvailability ?? true);
+  const [imageFile, setImageFile] = useState<File | null>(image ?? null);
+
+  const form = useForm<RoomFormInput>({
+    resolver: zodResolver(roomFormSchema),
+    mode: 'onChange',
+    defaultValues: {
+      roomName: roomName || '',
+      headcount: capacity ? String(capacity) : '',
+      hour,
+      minute,
+      imageFile: image ?? null,
+    },
+  });
 
   const {
     register,
@@ -22,17 +39,7 @@ export const useRoomForm = () => {
     setValue,
     handleSubmit,
     formState: { errors, isValid },
-  } = useForm<RoomFormInput>({
-    resolver: zodResolver(roomFormSchema),
-    mode: 'onChange',
-    defaultValues: {
-      roomName: '',
-      hour: '',
-      minute: '',
-      headcount: '',
-      imageFile: null,
-    },
-  });
+  } = form;
 
   const toggleMic = () => setMicOn((prev) => !prev);
   const values = watch();

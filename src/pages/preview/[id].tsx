@@ -1,51 +1,79 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+
 import WebCamPreviewModal from '@/components/webcamPreview/WebCamPreview';
-import { UserInfo, RoomInfo } from '@/types/preview';
 import CreateJoinHeader from '@/components/Header/CreateJoinHeader';
 import CardPageLayout from '@/components/common/CardPageLayout';
+
+import { fetchMyhome } from '@/apis/myhome';
 import { enterRoom } from '@/apis/room';
 
-import { getUserFromToken } from '@/utils/decode';
+import { UserInfo } from '@/types/room';
 
 const WebCamPreviewPage = () => {
   const router = useRouter();
-
   const { id } = router.query;
   const roomId = Array.isArray(id) ? Number(id[0]) : Number(id);
 
   const [user, setUser] = useState<UserInfo | null>(null);
+  const [isHost, setIsHost] = useState<boolean | null>(null);
 
-  // 유저 정보 가져오기 - 추후 마이홈 api로 바꿀 예정
   useEffect(() => {
-    const user = getUserFromToken();
-    if (user) {
-      setUser(user);
-    } else {
-      console.error('토큰에서 유저 정보 가져오기 실패');
-    }
+    if (!router.isReady) return;
+    const from = router.query.from;
+    setIsHost(from === 'create');
+  }, [router.isReady, router.query.from]);
+
+  // 유저 정보 불러오기
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const data = await fetchMyhome();
+        setUser({
+          userId: data.userId,
+          nickname: data.username,
+          isWorking: true,
+          camStatus: true,
+          micStatus: true,
+        });
+      } catch (error) {
+        console.error('유저 정보 불러오기 실패', error);
+      }
+    };
+
+    loadUser();
   }, []);
 
+  // 방 입장 API 호출
   const handleEnterRoom = async ({
-    camStatus,
-    micStatus,
-  }: {
-    camStatus: boolean;
-    micStatus: boolean;
-  }) => {
-    try {
-      await enterRoom(String(roomId), {
-        micTurnedOn: micStatus,
-        camTurnedOn: camStatus,
-      });
+  camStatus,
+  micStatus,
+}: {
+  camStatus: boolean;
+  micStatus: boolean;
+}) => {
+  try {
+    await enterRoom(String(roomId), {
+      micTurnedOn: micStatus,
+      camTurnedOn: camStatus,
+    });
 
-      router.push(`/room/${roomId}`);
-    } catch (err) {
-      alert('방 입장 실패! 다시 시도해주세요.');
-    }
-  };
+    router.push({
+      pathname: `/room/${roomId}`,
+      query: {
+        from: 'join',
+        cam: String(camStatus),
+        mic: String(micStatus),
+      },
+    });
+  } catch (err) {
+    alert('방 입장 실패');
+  }
+};
 
-  if (!roomId || !user) {
+
+
+  if (!user || !roomId || isHost === null) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <p className="text-gray7 font-pre">정보를 불러오는 중입니다...</p>
@@ -61,9 +89,9 @@ const WebCamPreviewPage = () => {
           <WebCamPreviewModal
             roomId={roomId}
             user={user}
-            isHost={true}
+            isHost={isHost}
             onClose={() => router.back()}
-            onEditRoom={() => {}}
+            onEditRoom={() => {}} 
             onEnterRoom={handleEnterRoom}
           />
         </CardPageLayout>

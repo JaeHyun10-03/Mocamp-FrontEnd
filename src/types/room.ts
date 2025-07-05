@@ -42,3 +42,12 @@ export interface GroupCallState {
   myUserId: number;
 }
 
+export interface UserInfo {
+  userId: number;
+  nickname: string;
+  isWorking: boolean;
+  camStatus: boolean;
+  micStatus: boolean;
+  stream?: MediaStream | null;
+  error?: string | null;
+}

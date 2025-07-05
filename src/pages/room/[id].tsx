@@ -30,6 +30,10 @@ const RoomPage = () => {
   const myUserId = me?.userId ?? 0;
   const myUsername = me?.username ?? '';
 
+  const camStatus = router.query.cam !== 'false';   
+const micStatus = router.query.mic !== 'false';
+
+
   const {
     participants: callParticipants,
     toggleMedia,
@@ -46,6 +50,8 @@ const RoomPage = () => {
     roomId: Number(roomId ?? 0),
     myUserId,
     myUsername,
+    camStatus,    
+  micStatus,
   });
 
   const [slideIndex, setSlideIndex] = useState(0);
