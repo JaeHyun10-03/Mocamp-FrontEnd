@@ -1,25 +1,30 @@
 'use client';
 
 import { useRouter } from 'next/router';
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CommonModal from '@/components/common/modal/CommonModal';
 import Portal from '../common/modal/Portal';
 import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
 import { useRoomContext } from '@/hooks/room/useRoomContext';
+import CopyComplete from '@/components/Header/modal/Copy';
 
 interface WorkspaceHeaderProps {
   roomName?: string;
   isOwner?: boolean;
+  roomSeq?: string;
 }
 
-const WorkspaceHeader = ({ roomName = '', isOwner = true }: WorkspaceHeaderProps) => {
-  const { id } = useRouter().query;
+const WorkspaceHeader = ({ roomName = '', isOwner = true, roomSeq = '' }: WorkspaceHeaderProps) => {
+  const router = useRouter();
+  const { id } = router.query;
   const roomId = Array.isArray(id) ? id[0] : id;
 
   const { notice, setNotice } = useRoomContext(roomId as string);
   const { updateNotice } = useRoomPublisher(roomId as string);
 
   const [showNoticeModal, setShowNoticeModal] = useState(false);
+  const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
+  const [isKakaoInitialized, setIsKakaoInitialized] = useState(false);
 
   const handleNoticeClick = () => {
     if (isOwner) setShowNoticeModal(true);
@@ -31,22 +36,106 @@ const WorkspaceHeader = ({ roomName = '', isOwner = true }: WorkspaceHeaderProps
     setShowNoticeModal(false);
   };
 
+  useEffect(() => {
+    const waitForKakaoReady = () => {
+      const checkLinkReady = setInterval(() => {
+        if (window.Kakao?.Link) {
+          setIsKakaoInitialized(true);
+          console.log('Kakao SDK 완전 초기화 완료');
+          clearInterval(checkLinkReady);
+        } else {
+          console.log('Kakao.Link 아직 준비되지 않음');
+        }
+      }, 100);
+    };
+
+    const tryInitKakao = () => {
+      if (
+        typeof window !== 'undefined' &&
+        window.kakaoSdkLoaded &&
+        window.Kakao &&
+        !window.Kakao.isInitialized()
+      ) {
+        window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_JS_KEY);
+        console.log('Kakao SDK 초기화 시작');
+        waitForKakaoReady(); // 기다림
+      } else if (window.Kakao?.isInitialized() && window.Kakao?.Link) {
+        setIsKakaoInitialized(true);
+        console.log('Kakao SDK 이미 초기화됨 + Link 준비됨');
+      } else {
+        console.log('Kakao SDK 아직 로드되지 않음');
+      }
+    };
+
+    const loader = setInterval(() => {
+      if (window.kakaoSdkLoaded) {
+        tryInitKakao();
+        clearInterval(loader);
+      }
+    }, 200);
+
+    return () => clearInterval(loader);
+  }, []);
+
   const handleKakaoShare = () => {
-    alert('추후 구현');
+    const isLoggedIn = Boolean(localStorage.getItem('accessToken'));
+    const targetUrl = isLoggedIn
+      ? `${window.location.origin}/myhome`
+      : `${window.location.origin}/login`;
+
+    if (!roomSeq) {
+      console.warn('방 고유번호(roomSeq)가 없어 카카오 공유를 할 수 없습니다.');
+      return;
+    }
+
+    if (!isKakaoInitialized || !window.Kakao?.Link?.sendDefault) {
+      console.error('Kakao SDK가 완전히 초기화되지 않았습니다.');
+      return;
+    }
+
+    window.Kakao.Link.sendDefault({
+      objectType: 'feed',
+      content: {
+        title: '모캠프',
+        description: `아래 번호를 입력하여 모캠프에 참여하세요! ${roomSeq}`,
+        imageUrl: `${window.location.origin}/kakao_preview.png`,
+        link: {
+          mobileWebUrl: targetUrl,
+          webUrl: targetUrl,
+        },
+      },
+      buttons: [
+        {
+          title: '서비스 바로가기',
+          link: {
+            mobileWebUrl: targetUrl,
+            webUrl: targetUrl,
+          },
+        },
+      ],
+    });
   };
 
-  const handleCopyLink = async () => {
+  const handleCopyRoomSeq = async () => {
+    if (!roomSeq) return;
+
     try {
-      const link = window.location.href;
-      await navigator.clipboard.writeText(link);
-      alert('링크가 복사되었습니다!');
+      await navigator.clipboard.writeText(roomSeq);
+      setIsCopyModalOpen(true);
+      setTimeout(() => {
+        setIsCopyModalOpen(false);
+      }, 1500);
     } catch (err) {
-      console.error('링크 복사에 실패하였습니다:', err);
+      console.error('고유번호 복사 실패:', err);
     }
   };
 
+  const handleGoToTutorial = () => {
+    router.push('/tutorial');
+  };
+
   return (
-    <header className="fixed top-0 left-0 h-[53.34px] w-screen border-b-0 bg-white lg:h-[75px] xl:h-[100px]">
+    <header className="fixed top-0 left-0 z-50 h-[53.34px] w-screen border-b-0 bg-white lg:h-[75px] xl:h-[100px]">
       <div className="relative mx-auto h-full w-full">
         {/* 로고 */}
         <img
@@ -76,14 +165,14 @@ const WorkspaceHeader = ({ roomName = '', isOwner = true }: WorkspaceHeaderProps
           </span>
         </div>
 
-        {/* 링크 복사 버튼 */}
+        {/* 고유 복사 버튼 */}
         <button
-          onClick={handleCopyLink}
+          onClick={handleCopyRoomSeq}
           className="absolute top-[10.67px] left-[853.34px] flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#E6E6E6] bg-white lg:top-[15px] lg:left-300 lg:h-[45px] lg:w-[45px] xl:top-[20px] xl:left-400 xl:h-[60px] xl:w-[60px]"
         >
           <img
             src="/svgs/link_icon.svg"
-            alt="링크 복사"
+            alt="고유번호 복사"
             className="h-[15px] w-[15px] lg:h-[21px] lg:w-[21px] xl:h-[28px] xl:w-[28px]"
           />
         </button>
@@ -100,11 +189,14 @@ const WorkspaceHeader = ({ roomName = '', isOwner = true }: WorkspaceHeaderProps
           />
         </button>
 
-        {/* 설정 버튼 */}
-        <button className="absolute top-[10.67px] left-[928px] flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#E6E6E6] bg-white lg:top-[15px] lg:left-[1305px] lg:h-[45px] lg:w-[45px] xl:top-[20px] xl:left-[1740px] xl:h-[60px] xl:w-[60px]">
+        {/* 튜토리얼 돌아가기 버튼 */}
+        <button
+          onClick={handleGoToTutorial}
+          className="absolute top-[10.67px] left-[928px] flex h-8 w-8 items-center justify-center rounded-[10px] border border-[#E6E6E6] bg-white lg:top-[15px] lg:left-[1305px] lg:h-[45px] lg:w-[45px] xl:top-[20px] xl:left-[1740px] xl:h-[60px] xl:w-[60px]"
+        >
           <img
-            src="/svgs/setting_icon.svg"
-            alt="설정"
+            src="/svgs/que.svg"
+            alt="튜토리얼로 돌아가기"
             className="h-[15px] w-[15px] lg:h-[21px] lg:w-[21px] xl:h-[28px] xl:w-[28px]"
           />
         </button>
@@ -121,6 +213,13 @@ const WorkspaceHeader = ({ roomName = '', isOwner = true }: WorkspaceHeaderProps
             onSubmit={handleNoticeSubmit}
             onClose={() => setShowNoticeModal(false)}
           />
+        </Portal>
+      )}
+
+      {/* 고유 번호 복사 모달 */}
+      {isCopyModalOpen && (
+        <Portal>
+          <CopyComplete onClose={() => setIsCopyModalOpen(false)} />
         </Portal>
       )}
     </header>

@@ -26,19 +26,24 @@ const WebCamPreviewPage = () => {
     }
   }, []);
 
+  const handleEnterRoom = async ({
+    camStatus,
+    micStatus,
+  }: {
+    camStatus: boolean;
+    micStatus: boolean;
+  }) => {
+    try {
+      await enterRoom(String(roomId), {
+        micTurnedOn: micStatus,
+        camTurnedOn: camStatus,
+      });
 
-  const handleEnterRoom = async ({ camStatus, micStatus }: { camStatus: boolean; micStatus: boolean }) => {
-      try {
-        await enterRoom(String(roomId), {
-      micTurnedOn: micStatus,
-      camTurnedOn: camStatus,
-    });
-
-        router.push(`/room/${roomId}`);
-      } catch (err) {
-        alert('방 입장 실패! 다시 시도해주세요.');
-      }
-    };
+      router.push(`/room/${roomId}`);
+    } catch (err) {
+      alert('방 입장 실패! 다시 시도해주세요.');
+    }
+  };
 
   if (!roomId || !user) {
     return (
@@ -49,9 +54,9 @@ const WebCamPreviewPage = () => {
   }
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center bg-[#FAFAFA]">
+    <div className="h-screen w-screen bg-[#e6e6e6]">
       <CreateJoinHeader />
-      <main className="flex flex-1">
+      <main className="mt-[50px] flex flex-1 flex-col items-center justify-center">
         <CardPageLayout>
           <WebCamPreviewModal
             roomId={roomId}
