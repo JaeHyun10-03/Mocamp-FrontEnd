@@ -77,8 +77,8 @@ const TimeGraph = ({ timeList, goalList, onDateClick, selectedDate }: TimeGraphP
 
           {/* y축 */}
           <YAxis
-            domain={[0, 1200]}
-            ticks={[300, 600, 900, 1200]}
+            domain={[0, 360]}
+            ticks={[0, 120, 240, 360]}
             axisLine={false}
             tickLine={false}
             tick={{ fill: '#555555', fontSize: 16 }}

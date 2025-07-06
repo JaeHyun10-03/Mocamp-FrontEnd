@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 
 interface ParticipatedCardProps {
   size: 'sm' | 'md' | 'lg'; // 아직 사용되지 않음
-  isCompleted: boolean;
+  status: boolean;
   roomId: number;
   roomName: string;
   createdAt: string;
@@ -13,7 +13,7 @@ interface ParticipatedCardProps {
 
 function ParticipatedCard({
   size = 'lg',
-  isCompleted,
+  status,
   roomId,
   roomName,
   createdAt,
@@ -30,10 +30,10 @@ function ParticipatedCard({
 
       {/* 텍스트 정보 */}
       <div className="relative flex flex-1 cursor-default flex-col justify-center space-y-[0.25rem]">
-        {isCompleted ? (
-          <p className="text-xl font-semibold text-[#f00]">종료</p>
-        ) : (
+        {status ? (
           <p className="text-xl font-medium text-[#0096ff]">진행 중</p>
+        ) : (
+          <p className="text-xl font-semibold text-[#f00]">종료</p>
         )}
         <p className="text-xl font-semibold text-[#333]">{roomName}</p>
         <div className="flex flex-row gap-4">
@@ -41,7 +41,7 @@ function ParticipatedCard({
           <p className="text-xl text-[#c4c4c4]">{formatTimeString(time)}</p>
         </div>
 
-        {!isCompleted && (
+        {status && (
           <button
             onClick={() => {
               router.push(`/room/${roomId}`);

@@ -1,5 +1,5 @@
 import { fetchMyhome } from '@/apis/myhome';
-import CreateJoinHeader from '@/components/Header/CreateJoinHeader';
+import ProfileModal from '@/components/myhome/content/ProfileModal';
 import MocampUsageTrend from '@/components/myhome/MocampUsageTrend';
 import ParticipantedMocamp from '@/components/myhome/ParticipantedMocamp';
 import SideBar from '@/components/myhome/SideBar';
@@ -7,9 +7,10 @@ import Total from '@/components/myhome/Total';
 import { useCategoryStore } from '@/stores/category-store';
 import { useMyhomeStore } from '@/stores/myhome-store';
 import { useEffect } from 'react';
+import MyhomeHeader from '@/components/Header/MyhomeHeader';
 
 const MyHome = () => {
-  const { category } = useCategoryStore();
+  const { category, isProfileModal, setIsProfileModal } = useCategoryStore();
   const {
     profileImage,
     username,
@@ -43,6 +44,10 @@ const MyHome = () => {
     ),
   };
 
+  const handleCloseModal = () => {
+    setIsProfileModal(false);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -66,12 +71,15 @@ const MyHome = () => {
   }, [category]);
 
   return (
-    <div className="h-screen w-screen bg-[#e6e6e6]">
-      <CreateJoinHeader />
+    <div className="min-h-screen w-screen overflow-y-auto bg-[#e6e6e6]">
+      <MyhomeHeader />
       <div className="mt-[50px] flex justify-center gap-[10px] px-4 sm:px-6 md:px-8 lg:px-12">
-        <SideBar profileImage={profileImage} username={username} />
+        <SideBar profileImage={profileImage} username={username} isProfileModal={isProfileModal} />
         {categoryMap[category] ?? null}
       </div>
+      {isProfileModal && (
+        <ProfileModal username={username} profileImage={profileImage} onClose={handleCloseModal} />
+      )}
     </div>
   );
 };

@@ -18,10 +18,11 @@ const ParticipantedMocamp = ({ roomList }: ParticipantedMocampProps) => {
               <ParticipantedMocampItem
                 size="lg"
                 roomId={room.roomId}
-                isCompleted={room.status}
+                status={room.status}
                 roomName={room.roomName}
                 createdAt={room.startedAt}
                 time={room.duration}
+                userGoalList={room.userGoalList}
               />
             );
           })

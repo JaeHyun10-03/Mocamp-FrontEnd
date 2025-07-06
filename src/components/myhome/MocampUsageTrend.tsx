@@ -29,7 +29,7 @@ const MocampUsageTrend = ({
   const getSelectedDateGoals = () => {
     if (!selectedDate) return [];
     const selectedDayData = goalList.find((item) => item.date === selectedDate);
-    return selectedDayData?.goals || [];
+    return selectedDayData?.userGoalList || [];
   };
 
   // 날짜 클릭 핸들러

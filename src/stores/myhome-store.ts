@@ -22,6 +22,7 @@ export interface Room {
   roomId: number;
   duration: string;
   status: boolean;
+  userGoalList: [];
   roomName: string;
   startedAt: string;
 }

@@ -6,20 +6,22 @@ import { useRouter } from 'next/router';
 
 interface ParticipantedMocampItemProps {
   size?: 'sm' | 'md' | 'lg';
-  isCompleted: boolean;
+  status: boolean;
   roomName: string;
   createdAt: string;
   time: string;
   roomId: number;
+  userGoalList: [];
 }
 
 const ParticipantedMocampItem = ({
   size = 'lg',
   roomId,
-  isCompleted,
+  status,
   roomName,
   createdAt,
   time,
+  userGoalList,
 }: ParticipantedMocampItemProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const router = useRouter();
@@ -35,10 +37,10 @@ const ParticipantedMocampItem = ({
           {/* 텍스트 정보 */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-2">
-              {isCompleted ? (
-                <span className="text-xl font-semibold text-[#FF0000]">종료</span>
-              ) : (
+              {status ? (
                 <span className="text-xl font-semibold text-[#0096ff]">진행 중</span>
+              ) : (
+                <span className="text-xl font-semibold text-[#FF0000]">종료</span>
               )}
             </div>
             <h3 className="text-xl font-semibold text-[#555]">{roomName}</h3>
@@ -59,17 +61,19 @@ const ParticipantedMocampItem = ({
           >
             <span className="text-lg font-semibold text-[#555]">세부 목표 확인</span>
           </button>
-          <button
-            onClick={() => {
-              router.push(`/room/${roomId}`);
-            }}
-            className="flex cursor-pointer items-center justify-center gap-2.5 rounded-[10px] bg-[#27cfa5] px-[30px] py-[15px] hover:bg-teal-500"
-          >
-            <span className="text-lg font-semibold text-white">입장하기</span>
-          </button>
+          {status && (
+            <button
+              onClick={() => {
+                router.push(`/room/${roomId}`);
+              }}
+              className="flex cursor-pointer items-center justify-center gap-2.5 rounded-[10px] bg-[#27cfa5] px-[30px] py-[15px] hover:bg-teal-500"
+            >
+              <span className="text-lg font-semibold text-white">입장하기</span>
+            </button>
+          )}
         </div>
       </div>
-      {isOpen && <ParticipantedMocampModal setIsOpen={setIsOpen} />}
+      {isOpen && <ParticipantedMocampModal setIsOpen={setIsOpen} userGoalList={userGoalList} />}
     </div>
   );
 };

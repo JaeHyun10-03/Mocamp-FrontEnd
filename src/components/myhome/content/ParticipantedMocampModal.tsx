@@ -3,9 +3,10 @@ import CloseButton from '@/public/svgs/CloseButton.svg';
 
 interface Props {
   setIsOpen: (open: boolean) => void;
+  userGoalList: [];
 }
 
-const ParticipantedMocampModal = ({ setIsOpen }: Props) => {
+const ParticipantedMocampModal = ({ setIsOpen, userGoalList }: Props) => {
   return (
     <div
       onClick={() => setIsOpen(false)}
@@ -27,9 +28,17 @@ const ParticipantedMocampModal = ({ setIsOpen }: Props) => {
           </p>
         </div>
 
-        <div className="flex flex-1 flex-col gap-5">
-          <GoalDetailItem isCompleted={true}>나의 목표1</GoalDetailItem>
-          <GoalDetailItem isCompleted={false}>나의 목표2</GoalDetailItem>
+        <div
+          className={`flex flex-1 flex-col gap-5 overflow-y-auto ${userGoalList.length === 0 && 'items-center justify-center'}`}
+        >
+          {userGoalList.length > 0 ? (
+            userGoalList.map((goal: any, index: number) => {
+              return <GoalDetailItem isCompleted={goal.status}>{goal.content}</GoalDetailItem>;
+            })
+          ) : (
+            <div className="text-body1 text-gray7">완료한 목표가 없습니다</div>
+          )}
+          {}
         </div>
       </div>
     </div>

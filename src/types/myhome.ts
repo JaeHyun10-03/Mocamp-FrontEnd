@@ -1,14 +1,14 @@
 export type ChartType = '목표 달성 수' | '사용시간';
 
 export interface GoalDetail {
-  id: string;
-  title: string;
-  completed: boolean;
+  goalId: number;
+  content: string;
+  isCompleted: boolean;
 }
 
 export interface DailyGoal {
   date: string;
-  goals: GoalDetail[];
+  userGoalList: GoalDetail[];
   amount: number;
 }
 

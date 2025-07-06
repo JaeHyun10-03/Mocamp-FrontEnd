@@ -17,3 +17,21 @@ export const loginout = async () => {
     console.error('로그아웃 실패:', err);
   }
 };
+
+export const updateProfile = async (username: string | null, image: File | null) => {
+  try {
+    const formData = new FormData();
+    if (username) formData.append('username', username);
+    if (image) formData.append('image', image);
+
+    const res = await apiWithToken.patch('/api/user/modify', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error('프로필 수정 실패 : ', err);
+    throw err;
+  }
+};

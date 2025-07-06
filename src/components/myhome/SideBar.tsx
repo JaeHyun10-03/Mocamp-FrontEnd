@@ -6,10 +6,11 @@ import { useRouter } from 'next/router';
 interface SideBarProps {
   profileImage: string;
   username: string;
+  isProfileModal: boolean;
 }
 
 const SideBar = ({ profileImage, username }: SideBarProps) => {
-  const { category, setCategory } = useCategoryStore();
+  const { category, setCategory, setIsProfileModal } = useCategoryStore();
   const router = useRouter();
 
   const handleLogout = () => {
@@ -26,20 +27,30 @@ const SideBar = ({ profileImage, username }: SideBarProps) => {
         <p className="text-xl font-semibold text-white">마이페이지</p>
       </div>
 
-      <div className="relative mt-[3.125rem] flex h-[12.3125rem] w-[12.5rem] items-center justify-center rounded-full border-2 border-[#27CFA5]">
+      <div className="relative mt-[3.125rem] flex h-[12.5rem] w-[12.5rem] items-center justify-center rounded-full border-2 border-[#27CFA5]">
         <Image
-          src={profileImage.length > 0 ? profileImage : '/defaultProfile.png'}
+          src={profileImage.length > 0 ? profileImage : '/defaultProfile2.png'}
           width={200}
           height={197}
           alt="프로필 사진"
-          className="rounded-full"
+          className="aspect-square rounded-full object-cover"
         />
       </div>
       <p className="mt-[1.875rem] cursor-default text-[1.75rem] font-semibold text-[#555555]">
         {username}
       </p>
 
-      <div className="mt-[1.875rem] flex h-[126px] w-[14.25rem] flex-col gap-4 rounded-[0.625rem] border border-[#e8e8e8] bg-white p-[1.25rem]">
+      <div className="mt-[1.875rem] flex h-[188px] w-[14.25rem] flex-col justify-between rounded-[0.625rem] border border-[#e8e8e8] bg-white p-[1.25rem]">
+        <p
+          onClick={() => {
+            setIsProfileModal(true);
+          }}
+          className={`hover:text-subhead text-body1 text-gray9 cursor-pointer font-medium hover:text-[#27cfa5]`}
+        >
+          나의 프로필
+        </p>
+        <hr className="border-[#e8e8e8]" />
+
         <p
           onClick={() => {
             setCategory('PARTICIPANTED_MOCAMP');
