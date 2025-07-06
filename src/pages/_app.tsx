@@ -4,6 +4,7 @@ import Script from 'next/script';
 import '@/styles/globals.css';
 import type { AppProps } from 'next/app';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import ResponsiveLayout from '@/components/layout/ResponsiveLayout';
 
 const pretendard = localFont({
   src: [
@@ -31,13 +32,15 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <main className={pretendard.className}>
-      <Component {...pageProps} />
+      <ResponsiveLayout>
+        <Component {...pageProps} />
+      </ResponsiveLayout>
       <SpeedInsights />
 
       <Script
         src="https://developers.kakao.com/sdk/js/kakao.min.js"
-  strategy="afterInteractive"
-  onLoad={handleKakaoScriptLoad}
+        strategy="afterInteractive"
+        onLoad={handleKakaoScriptLoad}
       />
     </main>
   );
