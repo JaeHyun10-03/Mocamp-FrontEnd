@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { signalingSocket } from '@/apis/signal';
+import { signalingSocket } from '@/libs/socket';
 
 interface UseWebRTCProps {
   roomId: number;
