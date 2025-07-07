@@ -53,15 +53,17 @@ const WebCamPreviewPage = () => {
   micStatus: boolean;
 }) => {
   try {
-    await enterRoom(String(roomId), {
-      micTurnedOn: micStatus,
-      camTurnedOn: camStatus,
-    });
+    if (!isHost) {
+      await enterRoom(String(roomId), {
+        micTurnedOn: micStatus,
+        camTurnedOn: camStatus,
+      });
+    }
 
     router.push({
       pathname: `/room/${roomId}`,
       query: {
-        from: 'join',
+        from: isHost ? 'create' : 'join',
         cam: String(camStatus),
         mic: String(micStatus),
       },
@@ -70,7 +72,6 @@ const WebCamPreviewPage = () => {
     alert('방 입장 실패');
   }
 };
-
 
 
   if (!user || !roomId || isHost === null) {

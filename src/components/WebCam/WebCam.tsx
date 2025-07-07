@@ -26,24 +26,28 @@ const WebCamTile = ({
   onSetWorkStatus,
   onShowNotDelegationModal,
 }: WebCamTileProps) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [camStatus, setCameraOn] = useState(participant.camStatus);
-  const [micStatus, setMicOn] = useState(participant.micStatus);
   const [statusOpen, setStatusOpen] = useState(false);
-  const [isWorking, setIsWorking] = useState(participant.isWorking);
+
+  const camStatus = participant.camStatus;
+  const micStatus = participant.micStatus;
+  const isWorking = participant.isWorking;
+
   const setParticipantStatus = (working: boolean) => {
-    setIsWorking(working);
     setStatusOpen(false);
     onSetWorkStatus(working);
   };
 
+  const toggleCamera = () => {
+    if (!isLocal) return;
+    onToggleMedia('video', !camStatus);
+  };
 
-  useEffect(() => {
-    if (videoRef.current && participant.stream instanceof MediaStream) {
-      videoRef.current.srcObject = participant.stream;
-    }
-  }, [participant.stream]);
+  const toggleMic = () => {
+    if (!isLocal) return;
+    onToggleMedia('audio', !micStatus);
+  };
 
+  // 캠/마이크 실시간 동기화 보완용
   useEffect(() => {
     participant.stream?.getVideoTracks().forEach((track) => {
       track.enabled = camStatus;
@@ -56,25 +60,11 @@ const WebCamTile = ({
     });
   }, [micStatus, participant.stream]);
 
-  const toggleCamera = () => {
-    setCameraOn((prev) => {
-      onToggleMedia('video', !prev);
-      return !prev;
-    });
-  };
-
-  const toggleMic = () => {
-    setMicOn((prev) => {
-      onToggleMedia('audio', !prev);
-      return !prev;
-    });
-  };
-
   return (
-    <div className="relative flex h-[270px] w-[480px] flex-shrink-0 flex-col justify-end rounded-[20px] bg-[#3D3D3D]">
-      {camStatus && participant.stream ? (
-        <div className="absolute inset-0 z-0" style={{ transform: 'rotateY(180deg)' }}>
-          <WebCamMedia stream={participant.stream} />
+    <div className="relative flex h-[144px] w-[256px] flex-shrink-0 flex-col justify-end rounded-[20px] bg-[#3D3D3D] lg:h-[202.5px] lg:w-[360px] xl:h-[270px] xl:w-[480px]">
+      {participant.camStatus && participant.stream ? (
+        <div className="absolute inset-0 z-0">
+          <WebCamMedia stream={participant.stream} isMirror={isLocal} />
         </div>
       ) : (
         <span className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20px] font-semibold tracking-[-0.4px] text-[rgba(255,255,255,0.20)] select-none">
@@ -105,39 +95,46 @@ const WebCamTile = ({
         </span>
 
         <div className="ml-auto flex items-center">
-
-          <div className="relative">
-            <button
-              onClick={() => setStatusOpen(!statusOpen)}
-              className={`h-[40px] w-[107px] rounded-[5px] px-[20px] text-[16px] font-semibold backdrop-blur-[2px] ${
-                isWorking
-                  ? 'bg-[rgba(39,207,165,0.80)] text-white'
-                  : 'bg-[rgba(95,95,95,0.50)] text-white'
-              }`}
-            >
-              {isWorking ? '작업 중' : '자리 비움'}
-            </button>
-            {statusOpen && (
-              <div className="absolute top-full left-0 z-50 inline-flex h-[90px] flex-col items-start justify-between gap-[16px] rounded-[10px] border border-[#E8E8E8] bg-white p-[20px]">
-                <div className="flex items-center gap-[10px]">
-                  <button onClick={() => setParticipantStatus(true)} className="flex items-center">
-                    {isWorking ? <SelectIcon /> : <NoneIcon />}
-                  </button>
-                  <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
-                    작업 중
-                  </span>
+          {isLocal && (
+            <div className="relative">
+              <button
+                onClick={() => setStatusOpen(!statusOpen)}
+                className={`h-[40px] w-[107px] rounded-[5px] px-[20px] text-[16px] font-semibold backdrop-blur-[2px] ${
+                  isWorking
+                    ? 'bg-[rgba(39,207,165,0.80)] text-white'
+                    : 'bg-[rgba(95,95,95,0.50)] text-white'
+                }`}
+              >
+                {isWorking ? '작업 중' : '자리 비움'}
+              </button>
+              {statusOpen && (
+                <div className="absolute top-full left-0 z-50 inline-flex h-[90px] flex-col items-start justify-between gap-[16px] rounded-[10px] border border-[#E8E8E8] bg-white p-[20px]">
+                  <div className="flex items-center gap-[10px]">
+                    <button
+                      onClick={() => setParticipantStatus(true)}
+                      className="flex items-center"
+                    >
+                      {isWorking ? <SelectIcon /> : <NoneIcon />}
+                    </button>
+                    <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
+                      작업 중
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-[10px]">
+                    <button
+                      onClick={() => setParticipantStatus(false)}
+                      className="flex items-center"
+                    >
+                      {!isWorking ? <SelectIcon /> : <NoneIcon />}
+                    </button>
+                    <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
+                      자리 비움
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-[10px]">
-                  <button onClick={() => setParticipantStatus(false)} className="flex items-center">
-                    {!isWorking ? <SelectIcon /> : <NoneIcon />}
-                  </button>
-                  <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
-                    자리 비움
-                  </span>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           <button
             onClick={toggleCamera}
@@ -148,7 +145,8 @@ const WebCamTile = ({
 
           <button
             onClick={toggleMic}
-            className="relative ml-[10px] flex h-[40px] w-[40px] items-center justify-center rounded bg-[rgba(95,95,95,0.50)] backdrop-blur-[2px]">
+            className="relative ml-[10px] flex h-[40px] w-[40px] items-center justify-center rounded bg-[rgba(95,95,95,0.50)] backdrop-blur-[2px]"
+          >
             <VoiceIcon
               width={14}
               height={20}

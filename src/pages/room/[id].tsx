@@ -26,13 +26,13 @@ const RoomPage = () => {
   const { todoGroups, setTodosByUser, roomData, participants, alertInfo, setAlertVisible } =
     useRoomContext(roomId);
 
+  const isHost = router.query.from === 'create';
   const me = participants.find((p) => p.isMyGoal);
   const myUserId = me?.userId ?? 0;
   const myUsername = me?.username ?? '';
 
-  const camStatus = router.query.cam !== 'false';   
-const micStatus = router.query.mic !== 'false';
-
+  const camStatus = router.query.cam !== 'false';
+  const micStatus = router.query.mic !== 'false';
 
   const {
     participants: callParticipants,
@@ -50,8 +50,10 @@ const micStatus = router.query.mic !== 'false';
     roomId: Number(roomId ?? 0),
     myUserId,
     myUsername,
-    camStatus,    
-  micStatus,
+    camStatus,
+    micStatus,
+    isHost,
+    initialParticipants: participants,
   });
 
   const [slideIndex, setSlideIndex] = useState(0);
@@ -79,9 +81,24 @@ const micStatus = router.query.mic !== 'false';
     }
   };
 
+  // 유저 좌측 고정
+  const sortedCallParticipants = [...callParticipants].sort((a, b) => {
+    if (a.isMyGoal) return -1;
+    if (b.isMyGoal) return 1;
+    return 0;
+  });
+
+  const sortedTodoGroups = Array.isArray(todoGroups)
+    ? [...todoGroups].sort((a, b) => {
+        if (a.isMyGoal) return -1;
+        if (b.isMyGoal) return 1;
+        return 0;
+      })
+    : [];
+
   return (
     <div className="bg-gray3 relative flex h-screen w-screen flex-1 items-center justify-center gap-5 pl-[106.667px] lg:pl-[150px] xl:pl-[200px]">
-      <WorkspaceHeader roomName={roomData.roomName} roomSeq={roomData.roomSeq} />
+      <WorkspaceHeader roomName={roomData.roomName} roomSeq={roomData.roomSeq} isOwner={isHost} />
       <Sidebar
         startTime={roomData.startedAt}
         endTime={roomData.endedAt}
@@ -94,14 +111,20 @@ const micStatus = router.query.mic !== 'false';
         {/* 웹캠 영역 */}
         <div className="mb-5 flex w-full gap-[10.67px] lg:gap-[15px] xl:gap-5">
           {Array.isArray(callParticipants) &&
-            callParticipants.map((participant: Participant) => (
+            sortedCallParticipants.map((participant: Participant) => (
               <WebCamTile
                 key={participant.userId}
                 participant={participant}
                 isLocal={participant.userId === myUserId}
                 adminUsername={adminUsername}
                 onToggleMedia={toggleMedia}
-                onOpenDelegationModal={openDelegationModal}
+                onOpenDelegationModal={() => {
+                  if (isHost) {
+                    openDelegationModal();
+                  } else {
+                    setIsNotDelegationModalOpen(true);
+                  }
+                }}
                 onShowNotDelegationModal={() => setIsNotDelegationModalOpen(true)}
                 onSetWorkStatus={setParticipantWorkStatus}
               />
@@ -139,7 +162,7 @@ const micStatus = router.query.mic !== 'false';
 
           {/* TodoSection 리스트 */}
           <div className="flex w-[789.33px] gap-[10.67px] lg:w-[1110px] lg:gap-[15px] xl:w-[1480px] xl:gap-5">
-            {visibleGroups.map((g) => (
+            {sortedTodoGroups.map((g) => (
               <TodoSection
                 key={g.id}
                 resolution={g.resolution}

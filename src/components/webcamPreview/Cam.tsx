@@ -44,7 +44,7 @@ const WebCamSection = ({ user, stream, error, roomId, onStatusChange }: CamProps
     <div className="relative flex h-[144px] w-[277.333px] flex-col justify-end rounded-[20px] bg-[#3D3D3D] lg:h-[202.5px] lg:w-[390px] xl:h-[270px] xl:w-[520px]">
       {camStatus && stream && (
         <div className="absolute inset-0 z-0">
-          <WebCamMedia stream={stream} />
+          <WebCamMedia stream={stream} isMirror={true}  />
         </div>
       )}
 
