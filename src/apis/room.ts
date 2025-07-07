@@ -4,7 +4,7 @@ import { Participant } from '@/types/room';
 import { CreateRoomFormData } from '@/types/create';
 
 // 방 생성
-export const createRoom = async (payload: CreateRoomFormData, accessToken: string) => {
+export const createRoom = async (payload: CreateRoomFormData) => {
   try {
     const { image, ...roomPayload } = payload;
     const formData = new FormData();
@@ -46,7 +46,7 @@ export const fetchRoomData = async (roomId: string) => {
 //고유번호로 방조회하기
 export const fetchRoomDataBySeq = async (roomSeq: string) => {
   const res = await apiWithToken.get(`/api/room/${roomSeq}/seq`);
-  return res.data.message; 
+  return res.data.message;
 };
 
 // 방 참가자 목록 조회

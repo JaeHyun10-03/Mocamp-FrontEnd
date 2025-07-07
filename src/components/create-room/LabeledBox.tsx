@@ -11,12 +11,12 @@ const LabeledBox = ({ label, description, isError = false, children }: LabeledBo
   return (
     <div className="flex flex-col gap-[10.67px] text-[12.8px] lg:gap-[15px] lg:text-lg xl:gap-5 xl:text-2xl">
       <div className="flex h-[15px] items-center gap-[5.333px] lg:h-[21px] lg:gap-[7.5px] xl:h-[28px] xl:gap-[10px]">
-        <span className="text-gray9 font-semibold">
+        <span className="text-gray9 font-semibold tracking-[-0.32px]">
           {parts[0].trim()}
           {label.includes('*') && <span className="text-primary"> *</span>}
         </span>
         <span
-          className={`text-[8.533px] font-medium lg:text-xs xl:text-lg ${isError ? 'text-red' : 'text-gray6'}`}
+          className={`text-[8.533px] font-medium tracking-[-0.32px] lg:text-xs xl:text-lg ${isError ? 'text-red' : 'text-gray6'}`}
         >
           {description}
         </span>

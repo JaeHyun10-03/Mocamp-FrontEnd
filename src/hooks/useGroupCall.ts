@@ -75,10 +75,10 @@ export function useGroupCall({
       setParticipants((prev) =>
         prev.map((p) => (p.userId === myUserId ? { ...p, isWorking: status } : p)),
       );
-     signalingSocket.send(`/pub/data/work-status/${roomId}`, {
-  userId: myUserId,
-  workStatus: status,
-});
+      signalingSocket.send(`/pub/data/work-status/${roomId}`, {
+        userId: myUserId,
+        workStatus: status,
+      });
     },
     [myUserId, roomId],
   );
@@ -92,18 +92,18 @@ export function useGroupCall({
           prev.map((p) => (p.userId === myUserId ? { ...p, camStatus: status } : p)),
         );
         signalingSocket.send(`/pub/data/cam-status/${roomId}`, {
-  userId: myUserId,
-  camStatus: status,
-});
+          userId: myUserId,
+          camStatus: status,
+        });
       } else {
         localStream.getAudioTracks().forEach((track) => (track.enabled = status));
         setParticipants((prev) =>
           prev.map((p) => (p.userId === myUserId ? { ...p, micStatus: status } : p)),
         );
         signalingSocket.send(`/pub/data/mic-status/${roomId}`, {
-  userId: myUserId,
-  micStatus: status,
-});
+          userId: myUserId,
+          micStatus: status,
+        });
       }
     },
     [localStream, myUserId, roomId],
@@ -112,8 +112,8 @@ export function useGroupCall({
   const delegateAdmin = useCallback(
     (newAdminId: number) => {
       signalingSocket.send(`/pub/data/delegation/${roomId}`, {
-  newAdminId,
-});
+        newAdminId,
+      });
     },
     [roomId],
   );
@@ -212,24 +212,23 @@ export function useGroupCall({
     kurentoSignalingRef.current = socket;
     socket.connect();
 
-   socket.setOnOpenCallback(async () => {
-  const stream = await getLocalMediaStream();
-  if (stream) {
-    setLocalStream(stream);
+    socket.setOnOpenCallback(async () => {
+      const stream = await getLocalMediaStream();
+      if (stream) {
+        setLocalStream(stream);
 
-    const updatedInitial = initialParticipants.map((p) => ({
-      ...p,
-      isAdmin: p.username === adminUsernameRef.current,
-      stream: p.userId === myUserId ? stream : null,
-    }));
+        const updatedInitial = initialParticipants.map((p) => ({
+          ...p,
+          isAdmin: p.username === adminUsernameRef.current,
+          stream: p.userId === myUserId ? stream : null,
+        }));
 
-    setParticipants(updatedInitial);
-    participantsRef.current = updatedInitial;
-  }
+        setParticipants(updatedInitial);
+        participantsRef.current = updatedInitial;
+      }
 
-  socket.send('joinRoom', { room: `room${roomId}`, name: myUsername });
-});
-
+      socket.send('joinRoom', { room: `room${roomId}`, name: myUsername });
+    });
 
     socket.on('roomParticipants', (msg) => {
       const effectiveAdmin = msg.adminUsername || msg.participants[0]?.username || '';

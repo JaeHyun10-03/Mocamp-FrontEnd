@@ -4,18 +4,19 @@ import ProgressBar from './ProgressBar';
 import MoreMenu from './MoreMenu';
 import GoalModalWrapper from '@/components/todo/modal/GoalModalWrapper';
 import CommonModal from '@/components/common/modal/CommonModal';
-import { Todo } from '@/types/todo';
+
 import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
+import { Goal } from '@/types/room';
 
 interface ProgressCardProps {
   done: number;
   total: number;
-  todos: Todo[];
+  todos: Goal[];
   roomId: string;
   resolution: string;
   isMyGoal: boolean;
   isSecret: boolean;
-  onUpdateTodos: (updatedTodos: Todo[]) => void;
+  onUpdateTodos: (updatedTodos: Goal[]) => void;
 }
 
 const ProgressCard = ({

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 
@@ -11,15 +11,23 @@ export interface RoomFormInput {
   minute: string;
   headcount: string;
   imageFile: File | null;
+  imagePreviewUrl?: string;
 }
 
-export const useRoomForm = (initialData?: CreateRoomFormData) => {
+export const useRoomForm = (
+  initialData?: CreateRoomFormData,
+  setFormData?: (data: Partial<CreateRoomFormData>) => void,
+) => {
   const { roomName, capacity, duration, image, micAvailability } = initialData || {};
 
   const [hour = '', minute = ''] = duration?.split(':') ?? [];
 
   const [micOn, setMicOn] = useState(micAvailability ?? true);
-  const [imageFile, setImageFile] = useState<File | null>(image ?? null);
+  const [imageFile, setImageFile] = useState<File | null>(() => {
+    if (!image) return null;
+    if (typeof image === 'string') return null;
+    return image;
+  });
 
   const form = useForm<RoomFormInput>({
     resolver: zodResolver(roomFormSchema),
@@ -38,8 +46,13 @@ export const useRoomForm = (initialData?: CreateRoomFormData) => {
     watch,
     setValue,
     handleSubmit,
+    control,
     formState: { errors, isValid },
   } = form;
+
+  useEffect(() => {
+    register('imageFile');
+  }, [register]);
 
   const toggleMic = () => setMicOn((prev) => !prev);
   const values = watch();
@@ -47,6 +60,22 @@ export const useRoomForm = (initialData?: CreateRoomFormData) => {
   const onImageSelect = (file: File | null) => {
     setImageFile(file);
     setValue('imageFile', file, { shouldValidate: true });
+    form.trigger('imageFile');
+
+    if (setFormData) {
+      if (file) {
+        const url = URL.createObjectURL(file);
+        setFormData({
+          image: file,
+          initialPreviewUrl: url,
+        });
+      } else {
+        setFormData({
+          image: null as any,
+          initialPreviewUrl: undefined,
+        });
+      }
+    }
   };
 
   return {
@@ -59,5 +88,6 @@ export const useRoomForm = (initialData?: CreateRoomFormData) => {
     isValid,
     onImageSelect,
     handleSubmit,
+    control,
   };
 };

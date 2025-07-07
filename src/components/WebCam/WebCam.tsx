@@ -67,7 +67,7 @@ const WebCamTile = ({
           <WebCamMedia stream={participant.stream} isMirror={isLocal} />
         </div>
       ) : (
-        <span className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[20px] font-semibold tracking-[-0.4px] text-[rgba(255,255,255,0.20)] select-none">
+        <span className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10.67px] font-semibold tracking-[-0.4px] text-[rgba(255,255,255,0.20)] select-none lg:text-[15px] xl:text-[20px]">
           카메라가 꺼져있습니다
         </span>
       )}

@@ -109,13 +109,10 @@ export class SignalingSocket {
       console.error('[STOMP] Invalid send destination:', destination);
       return;
     }
+    if (!this._validateBody(destination, body)) return;
 
-    if (!this._validateBody(destination, body)) {
-      return;
-    }
-
-    if (!this.connected) {
-      console.log('[STOMP] Not connected, queuing message');
+    if (!this.connected || !this.client.connected) {
+      console.warn('[STOMP] Not connected, queuing message →', destination);
       this.sendQueue.push({ destination, body, headers });
       return;
     }
@@ -172,7 +169,7 @@ export class SignalingSocket {
   }
 
   isConnected(): boolean {
-    return this.connected;
+    return this.connected && this.client.connected;
   }
 
   updateToken(newToken: string) {

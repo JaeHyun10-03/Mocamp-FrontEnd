@@ -20,10 +20,9 @@ const CreateJoinHeader = () => {
       if (!roomInfo?.roomId) {
         throw new Error('유효하지 않은 방입니다.');
       }
-
       router.push({
-        pathname: `/preview/${roomInfo.roomId}`,
-        query: { from: 'join' },
+        pathname: '/preview',
+        query: { from: 'join', roomId: roomInfo.roomId },
       });
 
       closeJoinModal();

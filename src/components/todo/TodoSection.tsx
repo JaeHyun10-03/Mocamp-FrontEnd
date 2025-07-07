@@ -3,20 +3,20 @@ import ProgressCard from '@/components/todo/progress/ProgressCard';
 import TodoSecretContent from './TodoSecretContent';
 import TodoCard from './TodoCard';
 
-import { Todo } from '@/types/todo';
 import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
+import { Goal } from '@/types/room';
 
 interface TodoSectionProps {
   roomId: string;
-  todos: Todo[];
+  goals: Goal[];
   resolution: string;
   isMyGoal: boolean;
   isSecret: boolean;
-  setTodos: (newTodos: Todo[]) => void;
+  setTodos: (newTodos: Goal[]) => void;
 }
 const TodoSection = ({
   roomId,
-  todos,
+  goals,
   setTodos,
   resolution,
   isMyGoal,
@@ -25,14 +25,14 @@ const TodoSection = ({
   const { toggleTodo } = useRoomPublisher(roomId);
 
   const handleToggleDone = (targetId: number, newDone: boolean) => {
-    const updatedTodos = todos.map((todo) =>
+    const updatedTodos = goals.map((todo) =>
       todo.goalId === targetId ? { ...todo, isCompleted: newDone } : todo,
     );
     setTodos(updatedTodos);
     toggleTodo(targetId, newDone);
   };
 
-  const doneCount = todos.filter((t) => t.isCompleted).length;
+  const doneCount = goals.filter((t) => t.isCompleted).length;
   const shouldHide = isSecret && !isMyGoal;
 
   return (
@@ -42,17 +42,17 @@ const TodoSection = ({
 
         <ProgressCard
           roomId={roomId}
-          todos={todos}
+          todos={goals}
           done={doneCount}
-          total={todos.length}
+          total={goals.length}
           onUpdateTodos={setTodos}
           resolution={resolution}
           isMyGoal={isMyGoal}
           isSecret={isSecret}
         />
 
-        {todos.length > 0 ? (
-          <TodoCard items={todos} onToggle={handleToggleDone} editable={isMyGoal} />
+        {goals.length > 0 ? (
+          <TodoCard goals={goals} onToggle={handleToggleDone} editable={isMyGoal} />
         ) : (
           <TodoEmptyContent
             onAddTodos={setTodos}

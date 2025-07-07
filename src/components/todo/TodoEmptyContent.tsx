@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Todo } from '@/types/todo';
 import GoalModalWrapper from '@/components/todo/modal/GoalModalWrapper';
+import { Goal } from '@/types/room';
 
 interface TodoEmptyContentProps {
-  onAddTodos: (newTodos: Todo[]) => void;
+  onAddTodos: (newTodos: Goal[]) => void;
   roomId: string;
   isMyGoal: boolean;
   isSecret: boolean;
@@ -33,7 +33,7 @@ const TodoEmptyContent = ({ onAddTodos, roomId, isMyGoal, isSecret }: TodoEmptyC
         </span>
         <button
           onClick={handleOpen}
-          className="bg-primary lg:text-body2 xl:text-title3 h-[31.933px] w-[85.333px] cursor-pointer rounded-[10px] text-[12.8px] font-semibold text-white lg:h-[44.906px] lg:w-30 xl:h-[60px] xl:w-[160px]"
+          className="bg-primary lg:text-body2 xl:text-title3 h-[31.933px] w-[85.333px] cursor-pointer rounded-[5.333px] text-[12.8px] font-semibold text-white lg:h-[44.906px] lg:w-30 lg:rounded-[7.5px] xl:h-[60px] xl:w-[160px] xl:rounded-[10px]"
         >
           추가하기
         </button>

@@ -1,9 +1,8 @@
 'use client';
 
 import clsx from 'clsx';
-
+import { useState } from 'react';
 import { useRoomForm, RoomFormInput } from '@/hooks/useRoomForm';
-import { createRoom, enterRoom } from '@/apis/room';
 
 import CloseIcon from '@/public/svgs/closeIcon.svg';
 
@@ -12,58 +11,48 @@ import LabeledBox from './LabeledBox';
 import NumberInput from './NumberInput';
 import ImageUploadBox from './ImageUploadBox';
 import { useRouter } from 'next/navigation';
-import { CreateRoomFormData } from '@/types/create'; 
+import { CreateRoomFormData } from '@/types/create';
+import { useRoomFormStore } from '@/stores/roomForm-store';
+
 interface CreateRoomProps {
   formData: CreateRoomFormData;
   setFormData: (data: Partial<CreateRoomFormData>) => void;
-  onSubmit: () => void;
+
   onClose: () => void;
 }
 
 const CreateRoom = ({ formData, onClose }: CreateRoomProps) => {
-  const {
-  register,
-  values,
-  micOn,
-  toggleMic,
-  errors,
-  isValid,
-  handleSubmit,
-  onImageSelect,
-} = useRoomForm(formData);
+  const [isLoading, setIsLoading] = useState(false);
+  const { register, values, micOn, toggleMic, errors, isValid, handleSubmit, onImageSelect } =
+    useRoomForm(formData);
 
   const router = useRouter();
-const onSubmit = async (data: RoomFormInput) => {
-  try {
-    const payload = {
-      roomName: data.roomName,
-      capacity: Number(data.headcount),
-      duration: `${data.hour.padStart(2, '0')}:${data.minute.padStart(2, '0')}`,
-      micAvailability: micOn,
-      micTurnedOn: true,
-      camTurnedOn: true,
-      image: data.imageFile!,
-    };
+  const { setFormData } = useRoomFormStore();
 
-    const accessToken = localStorage.getItem('accessToken');
-    if (!accessToken) {
-      router.push('/login');
-      return;
+  const onSubmit = async (data: RoomFormInput) => {
+    if (isLoading) return;
+    setIsLoading(true);
+
+    try {
+      const payload = {
+        roomName: data.roomName,
+        capacity: Number(data.headcount),
+        duration: `${data.hour.padStart(2, '0')}:${data.minute.padStart(2, '0')}`,
+        micAvailability: micOn,
+        micTurnedOn: true,
+        camTurnedOn: true,
+        image: data.imageFile!,
+        startedAt: new Date().toISOString(),
+      };
+
+      setFormData(payload);
+      router.push('/preview?from=create');
+    } catch (err) {
+      alert('폼 데이터 저장 실패. 다시 시도해주세요.');
+    } finally {
+      setIsLoading(false);
     }
-
-    const roomId = await createRoom(payload, accessToken);
-
-    await enterRoom(roomId, {
-      micTurnedOn: true,
-      camTurnedOn: true,
-    });
-
-     router.push(`/preview/${roomId}?from=create`);
-  } catch (err) {
-    alert('방 생성에 실패했습니다. 다시 시도해주세요.');
-  }
-};
-
+  };
 
   return (
     <>
@@ -172,6 +161,7 @@ const onSubmit = async (data: RoomFormInput) => {
         label="대표 이미지 설정 *"
         onImageSelect={onImageSelect}
         errorMessage={errors.imageFile?.message}
+        initialPreviewUrl={formData.initialPreviewUrl}
       />
 
       {/* 생성 버튼 */}

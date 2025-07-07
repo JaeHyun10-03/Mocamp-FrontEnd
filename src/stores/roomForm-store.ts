@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 interface RoomFormData {
+  roomId?: string;
   roomName: string;
   capacity: number;
   duration: string;
@@ -8,6 +9,8 @@ interface RoomFormData {
   micTurnedOn: boolean;
   camTurnedOn: boolean;
   image: File;
+  initialPreviewUrl?: string;
+  startedAt: string;
 }
 
 interface RoomFormStore {
@@ -18,6 +21,7 @@ interface RoomFormStore {
 
 export const useRoomFormStore = create<RoomFormStore>((set) => ({
   formData: {
+    roomId: '',
     roomName: '',
     capacity: 1,
     duration: '',
@@ -25,11 +29,14 @@ export const useRoomFormStore = create<RoomFormStore>((set) => ({
     micTurnedOn: true,
     camTurnedOn: true,
     image: new File([], ''),
+    initialPreviewUrl: '',
+    startedAt: '',
   },
   setFormData: (data) => set({ formData: data }),
   resetFormData: () =>
     set({
       formData: {
+        roomId: '',
         roomName: '',
         capacity: 1,
         duration: '',
@@ -37,6 +44,8 @@ export const useRoomFormStore = create<RoomFormStore>((set) => ({
         micTurnedOn: true,
         camTurnedOn: true,
         image: new File([], ''),
+        initialPreviewUrl: '',
+        startedAt: '',
       },
     }),
 }));

@@ -5,9 +5,15 @@ interface ImageUploadBoxProps {
   label: string;
   onImageSelect: (file: File | null) => void;
   errorMessage?: string;
+  initialPreviewUrl?: string;
 }
 
-const ImageUploadBox = ({ label, onImageSelect, errorMessage }: ImageUploadBoxProps) => {
+const ImageUploadBox = ({
+  label,
+  onImageSelect,
+  errorMessage,
+  initialPreviewUrl,
+}: ImageUploadBoxProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -57,6 +63,24 @@ const ImageUploadBox = ({ label, onImageSelect, errorMessage }: ImageUploadBoxPr
       if (previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewUrl]);
+
+  useEffect(() => {
+    if (!initialPreviewUrl) return;
+    setPreviewUrl(initialPreviewUrl);
+
+    const fetchInitialImage = async () => {
+      try {
+        const response = await fetch(initialPreviewUrl);
+        const blob = await response.blob();
+        const file = new File([blob], 'InitialImage.jpg', { type: blob.type });
+        onImageSelect(file);
+      } catch (e) {
+        console.error('초기 이미지 로드 실패', e);
+      }
+    };
+
+    fetchInitialImage();
+  }, [initialPreviewUrl]);
 
   return (
     <div className="flex flex-col gap-[10.67px] lg:gap-[15px] xl:gap-5">
@@ -119,6 +143,7 @@ const ImageUploadBox = ({ label, onImageSelect, errorMessage }: ImageUploadBoxPr
           id="image-upload-input"
           ref={inputRef}
           type="file"
+          name="imageFile"
           accept="image/*"
           onChange={handleImageChange}
           className="hidden"

@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
@@ -12,11 +14,10 @@ import WebCamSection from './Cam';
 import { RoomInfo, UserInfo } from '@/types/room';
 
 interface WebCamPreviewModalProps {
-  roomId: number;
+  roomId?: string; // 초대 입장에서는 있음, 방 생성에서는 없음
   user: UserInfo;
   isHost: boolean;
   onClose: () => void;
-  onEditRoom: () => void;
   onEnterRoom: (options: { camStatus: boolean; micStatus: boolean }) => void;
 }
 
@@ -30,7 +31,6 @@ const WebCamPreviewModal = ({
   user,
   isHost,
   onClose,
-  onEditRoom,
   onEnterRoom,
 }: WebCamPreviewModalProps) => {
   const [roomInfo, setRoomInfo] = useState<RoomInfo | null>(null);
@@ -38,37 +38,64 @@ const WebCamPreviewModal = ({
   const [camStatus, setCamStatus] = useState(true);
   const [micStatus, setMicStatus] = useState(true);
   const router = useRouter();
+  const { formData } = useRoomFormStore();
 
   useEffect(() => {
     const loadRoom = async () => {
       try {
-        const res = await fetchRoomData(roomId.toString());
-        setRoomInfo(res);
+        const data = await fetchRoomData(roomId!);
+        setRoomInfo(data);
       } catch (e) {
         console.error('방 정보 조회 실패', e);
       }
     };
 
-    loadRoom();
-  }, [roomId]);
+    const buildPreviewRoom = () => {
+      if (!formData.roomName || !formData.duration || !formData.capacity) return;
+
+      const previewRoomInfo: RoomInfo = {
+        roomId: -1,
+        roomName: formData.roomName,
+        roomSeq: '',
+        capacity: formData.capacity,
+        status: false,
+        notice: '',
+        startedAt: formData.startedAt ?? '',
+        endedAt: '',
+        duration: formData.duration,
+        imagePath:
+          formData.initialPreviewUrl || (formData.image ? URL.createObjectURL(formData.image) : ''),
+        micAvailability: formData.micAvailability,
+        adminUsername: user.nickname,
+      };
+
+      setRoomInfo(previewRoomInfo);
+    };
+
+    if (roomId) loadRoom();
+    else buildPreviewRoom();
+  }, [roomId, formData, user.nickname]);
 
   const handleEditRoom = () => {
     if (!roomInfo) return;
 
     useRoomFormStore.getState().setFormData({
+      roomId: String(roomInfo.roomId),
       roomName: roomInfo.roomName,
       capacity: roomInfo.capacity,
+      startedAt: roomInfo.startedAt,
       duration: roomInfo.duration,
       micAvailability: roomInfo.micAvailability,
       micTurnedOn: micStatus,
       camTurnedOn: camStatus,
       image: new File([], ''),
+      initialPreviewUrl: roomInfo.imagePath,
     });
 
     router.push('/create?from=edit');
   };
 
-  if (!roomInfo || !roomId || !user) {
+  if (!roomInfo || !user) {
     return (
       <div className="flex h-full w-full items-center justify-center">
         <span className="text-gray7 font-pre text-sm">정보를 불러오는 중입니다...</span>
@@ -95,24 +122,14 @@ const WebCamPreviewModal = ({
         올바르게 세팅되었는지 확인해주세요
       </div>
 
-      {/* 방 정보 & 캠 프리뷰 */}
+      {/* 방 정보 + 캠 프리뷰 */}
       <div className="border-gray4 bg-gray1 mt-[16.53px] flex h-[256.53px] w-[298.67px] flex-col items-center rounded-[5.333px] border p-0 lg:mt-[21.5px] lg:h-[360.75px] lg:w-[420px] lg:rounded-[7.5px] xl:mt-[30px] xl:h-[481px] xl:w-[560px] xl:rounded-[10px]">
         <RoomInfoSection
           room={{
-            roomId: roomInfo.roomId,
-            roomName: roomInfo.roomName,
-            roomSeq: roomInfo.roomSeq,
-            capacity: roomInfo.capacity,
-            status: roomInfo.status,
-            notice: roomInfo.notice,
-            startedAt: roomInfo.startedAt,
-            endedAt: roomInfo.endedAt,
+            ...roomInfo,
             duration: formatDuration(roomInfo.duration),
-            imagePath: roomInfo.imagePath,
-            micAvailability: roomInfo.micAvailability,
-            adminUsername: roomInfo.adminUsername,
           }}
-            isHost={isHost}
+          isHost={isHost}
         />
         <div className="bg-gray4 h-[1px] w-full" />
         <div className="flex h-full w-full flex-1 items-center justify-center">
@@ -120,7 +137,6 @@ const WebCamPreviewModal = ({
             user={user}
             stream={stream}
             error={error}
-            roomId={roomInfo.roomId}
             onStatusChange={({ camStatus, micStatus }) => {
               setCamStatus(camStatus);
               setMicStatus(micStatus);

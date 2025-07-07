@@ -22,8 +22,8 @@ const CreateJoinHeader = () => {
       }
 
       router.push({
-        pathname: `/preview/${roomInfo.roomId}`,
-        query: { from: 'join' },
+        pathname: '/preview',
+        query: { from: 'join', roomId: roomInfo.roomId },
       });
 
       closeJoinModal();

@@ -3,6 +3,7 @@ import { useState } from 'react';
 import ParticipantedMocampModal from './ParticipantedMocampModal';
 import { formatDateToString, formatTimeString } from '@/utils/timeUtils';
 import { useRouter } from 'next/router';
+import { enterRoom } from '@/apis/room';
 
 interface ParticipantedMocampItemProps {
   size?: 'sm' | 'md' | 'lg';
@@ -64,6 +65,7 @@ const ParticipantedMocampItem = ({
           {status && (
             <button
               onClick={() => {
+                enterRoom(String(roomId), { camTurnedOn: true, micTurnedOn: true });
                 router.push(`/room/${roomId}`);
               }}
               className="flex cursor-pointer items-center justify-center gap-2.5 rounded-[10px] bg-[#27cfa5] px-[30px] py-[15px] hover:bg-teal-500"

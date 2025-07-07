@@ -12,11 +12,11 @@ export interface Participant {
   resolution: string;
   isMyGoal: boolean;
   isSecret: boolean;
-  isAdmin: boolean;     
-  camStatus: boolean;   
-  micStatus: boolean;   
+  isAdmin: boolean;
+  camStatus: boolean;
+  micStatus: boolean;
   isWorking: boolean;
-  stream?: MediaStream | null;  
+  stream?: MediaStream | null;
 }
 
 export interface RoomInfo {
@@ -32,6 +32,7 @@ export interface RoomInfo {
   imagePath: string;
   micAvailability: boolean;
   adminUsername: string;
+  initialPriviewUrl?: string;
 }
 
 export interface GroupCallState {

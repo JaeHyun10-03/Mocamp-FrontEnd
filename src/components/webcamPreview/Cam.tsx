@@ -8,11 +8,10 @@ interface CamProps {
   user: UserInfo;
   stream: MediaStream | null;
   error?: string | null;
-  roomId: number;
   onStatusChange: (status: { camStatus: boolean; micStatus: boolean }) => void;
 }
 
-const WebCamSection = ({ user, stream, error, roomId, onStatusChange }: CamProps) => {
+const WebCamSection = ({ user, stream, error, onStatusChange }: CamProps) => {
   const [camStatus, setCameraOn] = useState(true);
   const [micStatus, setMicOn] = useState(true);
 
@@ -44,12 +43,12 @@ const WebCamSection = ({ user, stream, error, roomId, onStatusChange }: CamProps
     <div className="relative flex h-[144px] w-[277.333px] flex-col justify-end rounded-[20px] bg-[#3D3D3D] lg:h-[202.5px] lg:w-[390px] xl:h-[270px] xl:w-[520px]">
       {camStatus && stream && (
         <div className="absolute inset-0 z-0">
-          <WebCamMedia stream={stream} isMirror={true}  />
+          <WebCamMedia stream={stream} isMirror={true} />
         </div>
       )}
 
       {!camStatus && (
-        <span className="font-pre pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-[20px] font-semibold tracking-[-0.4px] text-[rgba(255,255,255,0.20)] select-none">
+        <span className="font-pre pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center text-[10.67px] font-semibold tracking-[-0.4px] text-[rgba(255,255,255,0.20)] select-none lg:text-[15px] xl:text-[20px]">
           카메라가 꺼져있습니다
         </span>
       )}

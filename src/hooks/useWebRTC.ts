@@ -10,33 +10,30 @@ export function useWebRTC({ roomId, userId }: UseWebRTCProps) {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const peerConnection = useRef<RTCPeerConnection | null>(null);
-  const [isOfferSent, setIsOfferSent] = useState(false); 
+  const [isOfferSent, setIsOfferSent] = useState(false);
   const getResponsiveResolution = () => {
-  const width = window.innerWidth;
+    const width = window.innerWidth;
 
-  if (width >= 1920) {
-    return { width: 520, height: 270 };
-  } else if (width >= 1440) {
-    return { width: 390, height: 202 };
-  } else {
-    return { width: 277, height: 144 };
-  }
-};
-
-
+    if (width >= 1920) {
+      return { width: 520, height: 270 };
+    } else if (width >= 1440) {
+      return { width: 390, height: 202 };
+    } else {
+      return { width: 277, height: 144 };
+    }
+  };
 
   useEffect(() => {
     let pc: RTCPeerConnection;
 
     async function start() {
       try {
-      const { width, height } = getResponsiveResolution();
+        const { width, height } = getResponsiveResolution();
 
-      const localStream = await navigator.mediaDevices.getUserMedia({
-        video: { width, height },
-        audio: true,
-      });
-        
+        const localStream = await navigator.mediaDevices.getUserMedia({
+          video: { width, height },
+          audio: true,
+        });
 
         setStream(localStream);
 

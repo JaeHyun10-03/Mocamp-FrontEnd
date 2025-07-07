@@ -10,7 +10,7 @@ export const roomFormSchema = z
     }),
     imageFile: z
       .union([z.instanceof(File), z.null()])
-      .refine((file): file is File => file instanceof File, {
+      .refine((file): file is File => file instanceof File && file.size > 0, {
         message: '이미지 설정 필수',
       }),
   })
