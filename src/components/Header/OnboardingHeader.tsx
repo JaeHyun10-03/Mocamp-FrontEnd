@@ -8,7 +8,7 @@ const OnboardingHeader = () => {
     router.push('/login');
   };
   return (
-    <header className="h-[53.5px] w-screen bg-white lg:h-19 xl:h-[100px]">
+    <header className="sticky top-0 left-0 z-999 h-[53.5px] w-screen bg-white lg:h-19 xl:h-[100px]">
       <div className="relative mx-auto h-full w-screen">
         <button
           type="button"
