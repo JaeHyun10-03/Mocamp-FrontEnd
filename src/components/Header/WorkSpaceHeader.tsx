@@ -3,10 +3,10 @@
 import { useRouter } from 'next/router';
 import { useState, useEffect } from 'react';
 import CommonModal from '@/components/common/modal/CommonModal';
-import Portal from '../common/modal/Portal';
+import Portal from '@/components/common/modal/Portal';
 import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
-import { useRoomContext } from '@/hooks/room/useRoomContext';
 import CopyComplete from '@/components/Header/modal/Copy';
+import { useRoomStore } from '@/stores/todo-store';
 
 interface WorkspaceHeaderProps {
   roomName?: string;
@@ -18,8 +18,9 @@ const WorkspaceHeader = ({ roomName = '', isOwner = true, roomSeq = '' }: Worksp
   const router = useRouter();
   const { id } = router.query;
   const roomId = Array.isArray(id) ? id[0] : id;
-
-  const { notice, setNotice } = useRoomContext(roomId as string);
+  const notice = useRoomStore((s) => {
+    return s.notice;
+  });
   const { updateNotice } = useRoomPublisher(roomId as string);
 
   const [showNoticeModal, setShowNoticeModal] = useState(false);
@@ -32,7 +33,6 @@ const WorkspaceHeader = ({ roomName = '', isOwner = true, roomSeq = '' }: Worksp
 
   const handleNoticeSubmit = (newNotice: string) => {
     updateNotice(newNotice);
-    setNotice(newNotice);
     setShowNoticeModal(false);
   };
 
@@ -158,7 +158,6 @@ const WorkspaceHeader = ({ roomName = '', isOwner = true, roomSeq = '' }: Worksp
           onClick={handleNoticeClick}
         >
           <span
-            key={notice}
             className={`font-pre h-full w-full text-[10.67px] leading-[100%] font-medium tracking-[-0.02em] lg:text-[15px] xl:text-[20px] ${notice ? 'font-semibold text-[#555555]' : 'text-[#C4C4C4]'} flex items-center text-left`}
           >
             {notice === '' ? '공지사항을 입력하세요' : notice}

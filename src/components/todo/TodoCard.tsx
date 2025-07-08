@@ -20,6 +20,7 @@ const TodoCard = ({ goals, onToggle, editable }: TodoCardProps) => {
       <div className="custom-scrollbar flex w-full flex-col gap-[10.67px] overflow-y-auto lg:gap-4 xl:gap-[20.32px]">
         {goals.map((item) => (
           <div
+            key={item.goalId}
             role={editable ? 'button' : undefined}
             tabIndex={editable ? 0 : -1}
             aria-checked={item.isCompleted}

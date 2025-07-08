@@ -6,7 +6,7 @@ interface RoomInfoSectionProps {
 }
 
 const RoomInfoSection = ({ room, isHost }: RoomInfoSectionProps) => {
-  const formattedDate = room.startedAt ? room.startedAt.split('T')[0].replace(/-/g, '.') : '';
+  const formattedDate = room.startedAt ? room.startedAt.split('T')[0].replace(/-/g, '. ') : '';
 
   const isInProgress = room.status && !isHost;
   const statusText = isHost ? '진행 전' : room.status ? '진행 중' : '진행 전';
@@ -34,7 +34,7 @@ const RoomInfoSection = ({ room, isHost }: RoomInfoSectionProps) => {
           {room.roomName}
         </span>
         <div className="mt-[1px] flex items-center lg:mt-[3px] xl:mt-[4px]">
-          <span className="font-pre text-[20px] font-medium tracking-[-0.4px] text-[#C4C4C4]">
+          <span className="font-pre text-[10.67px] font-medium tracking-[-0.4px] text-[#C4C4C4] lg:text-[15px] xl:text-[20px]">
             {formattedDate}
           </span>
           <span className="font-pre text-gray6 ml-[12px] font-medium tracking-[-0.4px]">

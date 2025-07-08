@@ -6,6 +6,12 @@ export const useRoomPublisher = (roomId: string) => {
       console.warn('❗ STOMP 연결이 아직 준비되지 않았습니다.');
       return;
     }
+
+    console.log('[STOMP SEND]', {
+      destination,
+      body,
+    });
+
     signalingSocket.send(destination, body);
   };
 

@@ -8,8 +8,8 @@ import LockButton from '@/public/svgs/LockIcon.svg';
 
 import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
 
-import { useRoomContext } from '@/hooks/room/useRoomContext';
 import { Goal } from '@/types/room';
+import { useRoomStore } from '@/stores/todo-store';
 
 interface GoalModalWrapperProps {
   onClose: () => void;
@@ -32,7 +32,7 @@ const GoalModalWrapper = ({
   const { updateGoals } = useRoomPublisher(roomId);
   const [isPrivate, setIsPrivate] = useState(isSecret);
 
-  const { setTodosByUser, participants } = useRoomContext(roomId);
+  const { setTodosByUser, participants } = useRoomStore();
 
   const handleAddTodo = () => {
     setCurrentTodos((prev) => [

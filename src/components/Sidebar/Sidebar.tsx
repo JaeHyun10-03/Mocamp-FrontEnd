@@ -2,6 +2,7 @@ import Timer from '@/components/Sidebar/SidebarTimer';
 import Participants from '@/components/Sidebar/SidebarParticipants';
 import Exit from '@/components/Sidebar/SidebarExitButton';
 import RoomEndNotice from './RoomEndNotice';
+import Portal from '../common/modal/Portal';
 
 interface SidebarProps {
   startTime: string;
@@ -29,12 +30,14 @@ const Sidebar = ({
       <Participants participants={participants} />
       <Exit onLeaveRoom={onLeaveRoom} />
       {alertInfo?.visible && (
-        <RoomEndNotice
-          minutesLeft={alertInfo.minutesLeft}
-          onClose={() => {
-            onCloseAlert?.();
-          }}
-        />
+        <Portal>
+          <RoomEndNotice
+            minutesLeft={alertInfo.minutesLeft}
+            onClose={() => {
+              onCloseAlert?.();
+            }}
+          />
+        </Portal>
       )}
     </aside>
   );

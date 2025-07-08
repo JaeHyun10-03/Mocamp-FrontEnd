@@ -8,6 +8,7 @@ import { Goal } from '@/types/room';
 
 interface TodoSectionProps {
   roomId: string;
+  userId: number;
   goals: Goal[];
   resolution: string;
   isMyGoal: boolean;
@@ -16,12 +17,17 @@ interface TodoSectionProps {
 }
 const TodoSection = ({
   roomId,
+  userId,
   goals,
   setTodos,
   resolution,
   isMyGoal,
   isSecret,
 }: TodoSectionProps) => {
+  console.log(
+    '[TodoSection] 렌더',
+    goals.map((g) => [g.goalId, g.isCompleted]),
+  );
   const { toggleTodo } = useRoomPublisher(roomId);
 
   const handleToggleDone = (targetId: number, newDone: boolean) => {
@@ -41,12 +47,12 @@ const TodoSection = ({
         <div className="absolute top-[79.5px] h-[1.067px] w-[237.333px] bg-[repeating-linear-gradient(to_right,#F2F2F2_0_10px,transparent_10px_20px)] bg-[length:20px_2px] bg-repeat-x lg:top-[112px] lg:h-[1.5px] lg:w-[333.75px] xl:top-[149.5px] xl:h-[2px] xl:w-[445px]" />
 
         <ProgressCard
+          userId={userId}
           roomId={roomId}
           todos={goals}
           done={doneCount}
           total={goals.length}
           onUpdateTodos={setTodos}
-          resolution={resolution}
           isMyGoal={isMyGoal}
           isSecret={isSecret}
         />

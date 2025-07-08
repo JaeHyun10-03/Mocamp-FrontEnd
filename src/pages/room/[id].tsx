@@ -13,9 +13,10 @@ import DelegationModal from '@/components/WebCam/modal/DelegationModal';
 import NotDelegationModal from '@/components/WebCam/modal/NotDelegationModal';
 
 import { leaveRoom } from '@/apis/room';
-import { useRoomContext } from '@/hooks/room/useRoomContext';
+import { useRoomSync } from '@/hooks/room/useRoomSync';
 import { useGroupCall } from '@/hooks/useGroupCall';
 import type { Participant } from '@/types/room';
+import { useRoomStore } from '@/stores/todo-store';
 
 const MAX_VISIBLE = 2;
 
@@ -27,9 +28,19 @@ const RoomPage = () => {
   const isHost = from === 'create';
   const camStatus = cam !== 'false';
   const micStatus = mic !== 'false';
+  useRoomSync(roomId);
 
-  const { todoGroups, setTodosByUser, roomData, participants, alertInfo, setAlertVisible } =
-    useRoomContext(roomId);
+  const todoGroups = useRoomStore((s) => s.todoGroups);
+  const participants = useRoomStore((s) => s.participants);
+  const roomData = useRoomStore((s) => s.roomData);
+  const alertInfo = useRoomStore((s) => s.alertInfo);
+  const notice = useRoomStore((s) => s.notice);
+
+  const setAlert = useRoomStore((s) => s.setAlert);
+  const setAlertVisible = (visible: boolean) => {
+    setAlert(visible ? alertInfo.minutesLeft : 0);
+  };
+  const setTodosByUser = useRoomStore((s) => s.setTodosByUser);
 
   const me = participants.find((p) => p.isMyGoal);
   const myUserId = me?.userId ?? 0;
@@ -66,8 +77,11 @@ const RoomPage = () => {
   const othersTodo = todoGroups.filter((g) => !g.isMyGoal);
   const othersCall = callParticipants.filter((p) => !p.isMyGoal);
 
-  const visibleTodoSlide = othersTodo.slice(slideIndex, slideIndex + MAX_VISIBLE);
-  const visibleCallSlide = othersCall.slice(slideIndex, slideIndex + MAX_VISIBLE);
+  const sortedOthersTodo = [...othersTodo].sort((a, b) => a.userId - b.userId);
+  const visibleTodoSlide = sortedOthersTodo.slice(slideIndex, slideIndex + MAX_VISIBLE);
+
+  const sortedCamTiles = [...othersCall].sort((a, b) => a.userId - b.userId);
+  const visibleCallSlide = sortedCamTiles.slice(slideIndex, slideIndex + MAX_VISIBLE);
 
   /* 실제 화면에 보여줄 배열 */
   const visibleTodoGroups = meGroup ? [meGroup, ...visibleTodoSlide] : visibleTodoSlide;
@@ -82,9 +96,15 @@ const RoomPage = () => {
     if (othersTodo.length > MAX_VISIBLE && slideIndex + MAX_VISIBLE >= othersTodo.length) {
       setSlideIndex(Math.max(0, othersTodo.length - MAX_VISIBLE));
     }
-  }, [othersTodo.length]);
+  }, [othersTodo.length, slideIndex]);
 
-  if (!router.isReady || !roomId || !roomData || todoGroups.length === 0) {
+  if (
+    !router.isReady ||
+    !roomId ||
+    !roomData ||
+    participants.length === 0 ||
+    todoGroups.length === 0
+  ) {
     return null;
   }
 
@@ -168,6 +188,7 @@ const RoomPage = () => {
             {visibleTodoGroups.map((g) => (
               <TodoSection
                 key={g.userId}
+                userId={g.userId}
                 resolution={g.resolution}
                 isMyGoal={g.isMyGoal}
                 isSecret={g.isSecret}

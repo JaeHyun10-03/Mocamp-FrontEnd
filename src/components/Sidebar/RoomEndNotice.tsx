@@ -18,7 +18,7 @@ const RoomEndNotice = ({ minutesLeft, onClose }: RoomEndNoticeProps) => {
   }, [onClose]);
 
   return (
-    <div className="border-primary fixed bottom-[60.13px] left-[25px] z-50 h-20 w-70 rounded-[10px] border bg-[#d4f5ed] lg:bottom-[80.5px] xl:bottom-[104px]">
+    <div className="border-primary fixed bottom-[60.13px] left-[25px] z-999 h-20 w-70 rounded-[10px] border bg-[#d4f5ed] lg:bottom-[80.5px] xl:bottom-[104px]">
       <div className="relative flex h-full items-center justify-center">
         <p className="text-body2 text-primary text-center">
           모캠프 종료까지 {minutesLeft}분 남았어요
