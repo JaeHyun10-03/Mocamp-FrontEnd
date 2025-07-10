@@ -98,12 +98,8 @@ const joinSession = async () => {
   const newOV = initOpenVidu();
   OVRef.current = newOV;
 
-  const newSession = newOV.initSession();
-  setSession(newSession);
-  useOpenViduStore.getState().setSession(newSession); 
-
-  if (!newSession || !userName) {
-    console.warn('[OpenVidu] joinSession: Session or userName not ready.', newSession, userName);
+  if (!session || !userName) {
+    console.warn('[OpenVidu] joinSession: Session or userName not ready.', session, userName);
     return;
   }
 
@@ -117,7 +113,7 @@ const joinSession = async () => {
     const rawToken = tokenRes.data;
     const token = normalizeToken(rawToken);
 
-    await newSession.connect(token, { clientData: userName }); 
+    await session.connect(token, { clientData: userName });
 
     const ovInstance = getOVInstance();
     if (!ovInstance) {
@@ -142,16 +138,14 @@ const joinSession = async () => {
       insertMode: 'APPEND',
     });
 
-    await newSession.publish(newPublisher); 
+    await session.publish(newPublisher);
     console.log('[OpenVidu] Publisher successfully published');
-
     setPublisher(newPublisher);
     useOpenViduStore.getState().setPublisher(newPublisher);
   } catch (error) {
     console.error('[OpenVidu] joinSession error:', error);
   }
 };
-
 
 
   const leaveSession = () => {
