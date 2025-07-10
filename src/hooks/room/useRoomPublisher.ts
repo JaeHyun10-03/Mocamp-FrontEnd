@@ -3,7 +3,7 @@ import { signalingSocket } from '@/libs/socket';
 export const useRoomPublisher = (roomId: string) => {
   const safeSend = (destination: string, body: any) => {
     if (!signalingSocket.isConnected) {
-      console.warn('❗ STOMP 연결이 아직 준비되지 않았습니다.');
+      console.warn('STOMP 연결이 아직 준비되지 않았습니다.');
       return;
     }
 

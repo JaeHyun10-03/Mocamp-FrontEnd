@@ -1,5 +1,6 @@
 import { OpenVidu } from 'openvidu-browser';
 
+// WSS로 배포 -> 배포시 NOT ws
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 const OPENVIDU_WSS = process.env.NEXT_PUBLIC_OPENVIDU_WSS;
 
@@ -12,6 +13,13 @@ let ovInstance: OpenVidu | null = null;
 
 export const initOpenVidu = () => {
   ovInstance = new OpenVidu();
+
+  ovInstance.setAdvancedConfiguration({
+    ...({
+      websocketUri: process.env.NEXT_PUBLIC_OPENVIDU_WSS,
+    } as any),
+  });
+
   return ovInstance;
 };
 
