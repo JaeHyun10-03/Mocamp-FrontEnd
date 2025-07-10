@@ -17,17 +17,6 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
 
   const OVRef = useRef<OpenVidu | null>(null);
 
-  const extractToken = (rawToken: string): string => {
-    try {
-      const url = new URL(rawToken.replace('ws://', 'wss://').replace(':4443', ''));
-      const tokenParam = url.searchParams.get('token');
-      if (!tokenParam) throw new Error('Invalid token format');
-      return tokenParam;
-    } catch (error) {
-      return rawToken;
-    }
-  };
-
   useEffect(() => {
     if (!OVRef.current) {
       OVRef.current = initOpenVidu();
@@ -86,63 +75,75 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
   }, [sessionId, userName]);
 
   // 조인 세션
-const joinSession = async () => {
-  if (session) {
-    session.disconnect();
-  }
+  const joinSession = async () => {
+    if (session) {
+      session.disconnect(); // 이전 세션이 존재하면 강제로 끊기
+    }
 
-  const newOV = initOpenVidu();
-  OVRef.current = newOV;
+    const newOV = initOpenVidu();
+    OVRef.current = newOV;
 
-  if (!session || !userName) {
-    console.warn('[OpenVidu] joinSession: Session or userName not ready.', session, userName);
-    return;
-  }
-
-  try {
-    const sessionRes = await apiWithToken.post('/api/sessions', {
-      customSessionId: sessionId,
-    });
-    const sessionIdFromServer = sessionRes.data;
-
-    const tokenRes = await apiWithToken.post(`/api/sessions/${sessionId}/connections`);
-    const rawToken = tokenRes.data;
-    const token = extractToken(rawToken); 
-
-    await session.connect(token, { clientData: userName });
-
-    const ovInstance = getOVInstance();
-    if (!ovInstance) {
-      console.error('[OpenVidu] OpenVidu instance not initialized');
+    if (!session || !userName) {
+      console.warn('[OpenVidu] joinSession: Session or userName not ready.', session, userName);
       return;
     }
 
-    const getVideoResolution = () => {
-      const width = window.innerWidth;
-      if (width >= 1920) return '480x270';
-      if (width >= 1440) return '360x202';
-      return '256x144';
-    };
+    try {
+      const sessionRes = await apiWithToken.post('/api/sessions', {
+        customSessionId: sessionId,
+      });
+      const sessionIdFromServer = sessionRes.data;
 
-    const newPublisher = ovInstance.initPublisher(undefined, {
-      audioSource: undefined,
-      videoSource: undefined,
-      publishAudio: micStatus,
-      publishVideo: camStatus,
-      resolution: getVideoResolution(),
-      frameRate: 30,
-      insertMode: 'APPEND',
-    });
+      const tokenRes = await apiWithToken.post(`/api/sessions/${sessionIdFromServer}/connections`);
 
-    await session.publish(newPublisher);
-    console.log('[OpenVidu] Publisher successfully published');
-    setPublisher(newPublisher);
-    useOpenViduStore.getState().setPublisher(newPublisher);
-  } catch (error) {
-    console.error('[OpenVidu] joinSession error:', error);
-  }
-};
+      const rawToken = tokenRes.data;
 
+      const cleanedUrl = rawToken.replace('ws://', 'wss://').replace(':4443', '');
+
+      const secureToken = cleanedUrl.includes('token=')
+        ? cleanedUrl.split('token=')[1]
+        : cleanedUrl;
+
+      await session.connect(secureToken, { clientData: userName });
+
+      const ovInstance = getOVInstance();
+      if (!ovInstance) {
+        console.error('[OpenVidu] OpenVidu instance not initialized');
+        return;
+      }
+
+      const getVideoResolution = () => {
+        const width = window.innerWidth;
+
+        if (width >= 1920) {
+          return '480x270';
+        }
+
+        if (width >= 1440) {
+          return '360x202';
+        }
+
+        return '256x144';
+      };
+
+      const newPublisher = ovInstance.initPublisher(undefined, {
+        audioSource: undefined,
+        videoSource: undefined,
+        publishAudio: micStatus,
+        publishVideo: camStatus,
+        resolution: getVideoResolution(),
+        frameRate: 30,
+        insertMode: 'APPEND',
+      });
+
+      await session.publish(newPublisher);
+      console.log('[OpenVidu] Publisher successfully published');
+      setPublisher(newPublisher);
+      useOpenViduStore.getState().setPublisher(newPublisher);
+    } catch (error) {
+      console.error('[OpenVidu] joinSession error:', error);
+    }
+  };
 
   const leaveSession = () => {
     if (session) {
