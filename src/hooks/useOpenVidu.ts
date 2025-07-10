@@ -74,7 +74,17 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
     };
   }, [sessionId, userName]);
 
+
+  // 조인 세션
   const joinSession = async () => {
+
+     if (session) {
+      session.disconnect(); // 이전 세션이 존재하면 강제로 끊기
+    }
+
+     const newOV = initOpenVidu();
+      OVRef.current = newOV;
+
     if (!session || !userName) {
       console.warn('[OpenVidu] joinSession: Session or userName not ready.', session, userName);
       return;
@@ -88,6 +98,7 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
 
       const tokenRes = await apiWithToken.post(`/api/sessions/${sessionIdFromServer}/connections`);
       const token = tokenRes.data;
+      const secureToken = token.replace('ws://', 'wss://');
 
       await session.connect(token, { clientData: userName });
 

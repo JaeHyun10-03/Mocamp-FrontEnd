@@ -3,8 +3,8 @@ import { useOpenViduStore } from '@/stores/openViduStore';
 export const useOpenViduControls = () => {
   const publisher = useOpenViduStore((state) => state.publisher);
 
+  // 마이크
 
-  
   const toggleMic = () => {
     if (publisher) {
       const isAudioActive = publisher.stream.audioActive;
@@ -12,7 +12,7 @@ export const useOpenViduControls = () => {
     }
   };
 
-
+// 캠 
 
   const toggleCam = () => {
     if (publisher) {
