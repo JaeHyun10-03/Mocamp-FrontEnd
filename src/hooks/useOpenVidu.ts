@@ -95,9 +95,9 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
       const sessionIdFromServer = sessionRes.data;
 
       const tokenRes = await apiWithToken.post(`/api/sessions/${sessionIdFromServer}/connections`);
-      const token = tokenRes.data;
-      const secureToken = token.replace('ws://', 'wss://');
 
+      const token = tokenRes.data;
+      const secureToken = token.replace('ws://', 'wss://').replace(':4443', '');
       await session.connect(secureToken, { clientData: userName });
 
       const ovInstance = getOVInstance();
