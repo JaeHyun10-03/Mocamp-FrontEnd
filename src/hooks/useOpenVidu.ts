@@ -96,13 +96,15 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
 
       const tokenRes = await apiWithToken.post(`/api/sessions/${sessionIdFromServer}/connections`);
 
-      const rawToken = tokenRes.data;
+    const rawToken = tokenRes.data;
 
-      const cleanedUrl = rawToken.replace('ws://', 'wss://').replace(':4443', '');
+// token=tok_xxx 추출
+const secureToken = rawToken.includes('token=')
+  ? rawToken.split('token=')[1]
+  : rawToken;
 
-      const secureToken = cleanedUrl.includes('token=')
-        ? cleanedUrl.split('token=')[1]
-        : cleanedUrl;
+await session.connect(secureToken, { clientData: userName });
+
 
       await session.connect(secureToken, { clientData: userName });
 
