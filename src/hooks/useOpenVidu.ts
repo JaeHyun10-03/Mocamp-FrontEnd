@@ -17,20 +17,20 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
 
   const OVRef = useRef<OpenVidu | null>(null);
 
-  const normalizeToken = (rawToken: string): string => {
-    try {
-      const url = new URL(rawToken);
+const normalizeToken = (rawToken: string): string => {
+  try {
+    // wss 프로토콜 강제 적용 + 포트 제거
+    const normalized = rawToken
+      .replace('ws://', 'wss://')
+      .replace('http://', 'wss://')
+      .replace(':4443', '');
+    return normalized;
+  } catch (error) {
+    console.error('[OpenVidu] normalizeToken error:', error);
+    return rawToken;
+  }
+};
 
-      // 프로토콜 강제 wss + 포트 제거
-      url.protocol = 'wss:';
-      url.port = ''; // remove :4443
-
-      return url.toString(); // token=tok_... 포함 전체 URL 반환
-    } catch (error) {
-      console.error('[OpenVidu] normalizeToken error:', error);
-      return rawToken;
-    }
-  };
 
   useEffect(() => {
     if (!OVRef.current) {
@@ -90,62 +90,63 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
   }, [sessionId, userName]);
 
   // 조인 세션
-  const joinSession = async () => {
-    if (session) {
-      session.disconnect();
-    }
+const joinSession = async () => {
+  if (session) {
+    session.disconnect();
+  }
 
-    const newOV = initOpenVidu();
-    OVRef.current = newOV;
+  const newOV = initOpenVidu();
+  OVRef.current = newOV;
 
-    if (!session || !userName) {
-      console.warn('[OpenVidu] joinSession: Session or userName not ready.', session, userName);
+  if (!session || !userName) {
+    console.warn('[OpenVidu] joinSession: Session or userName not ready.', session, userName);
+    return;
+  }
+
+  try {
+    const sessionRes = await apiWithToken.post('/api/sessions', {
+      customSessionId: sessionId,
+    });
+    const sessionIdFromServer = sessionRes.data;
+
+    const tokenRes = await apiWithToken.post(`/api/sessions/${sessionId}/connections`);
+    const rawToken = tokenRes.data;
+    const token = normalizeToken(rawToken);
+
+    await session.connect(token, { clientData: userName });
+
+    const ovInstance = getOVInstance();
+    if (!ovInstance) {
+      console.error('[OpenVidu] OpenVidu instance not initialized');
       return;
     }
 
-    try {
-      const sessionRes = await apiWithToken.post('/api/sessions', {
-        customSessionId: sessionId,
-      });
-      const sessionIdFromServer = sessionRes.data;
+    const getVideoResolution = () => {
+      const width = window.innerWidth;
+      if (width >= 1920) return '480x270';
+      if (width >= 1440) return '360x202';
+      return '256x144';
+    };
 
-      const tokenRes = await apiWithToken.post(`/api/sessions/${sessionId}/connections`);
-      const rawToken = tokenRes.data; // raw: ws://...:4443?sessionId=...&token=tok_...
-      const token = normalizeToken(rawToken); // token: wss://.../sessionId=...&token=tok_...
+    const newPublisher = ovInstance.initPublisher(undefined, {
+      audioSource: undefined,
+      videoSource: undefined,
+      publishAudio: micStatus,
+      publishVideo: camStatus,
+      resolution: getVideoResolution(),
+      frameRate: 30,
+      insertMode: 'APPEND',
+    });
 
-      await session.connect(token, { clientData: userName });
+    await session.publish(newPublisher);
+    console.log('[OpenVidu] Publisher successfully published');
+    setPublisher(newPublisher);
+    useOpenViduStore.getState().setPublisher(newPublisher);
+  } catch (error) {
+    console.error('[OpenVidu] joinSession error:', error);
+  }
+};
 
-      const ovInstance = getOVInstance();
-      if (!ovInstance) {
-        console.error('[OpenVidu] OpenVidu instance not initialized');
-        return;
-      }
-
-      const getVideoResolution = () => {
-        const width = window.innerWidth;
-        if (width >= 1920) return '480x270';
-        if (width >= 1440) return '360x202';
-        return '256x144';
-      };
-
-      const newPublisher = ovInstance.initPublisher(undefined, {
-        audioSource: undefined,
-        videoSource: undefined,
-        publishAudio: micStatus,
-        publishVideo: camStatus,
-        resolution: getVideoResolution(),
-        frameRate: 30,
-        insertMode: 'APPEND',
-      });
-
-      await session.publish(newPublisher);
-      console.log('[OpenVidu] Publisher successfully published');
-      setPublisher(newPublisher);
-      useOpenViduStore.getState().setPublisher(newPublisher);
-    } catch (error) {
-      console.error('[OpenVidu] joinSession error:', error);
-    }
-  };
 
   const leaveSession = () => {
     if (session) {
