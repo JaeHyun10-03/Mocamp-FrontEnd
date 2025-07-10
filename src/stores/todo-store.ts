@@ -19,6 +19,9 @@ interface RoomState {
   roomData: RoomInfo | null;
   notice: string;
   alertInfo: { visible: boolean; minutesLeft: number };
+ isHost: boolean;
+  setIsHost: (value: boolean) => void;
+  
 
   /* 업데이트 메서드 */
   setAll: (payload: { groups: TodoGroup[]; parts: Participant[]; room: RoomInfo }) => void;
@@ -39,8 +42,16 @@ export const useRoomStore = create<RoomState>()(
       roomData: null,
       notice: '',
       alertInfo: { visible: false, minutesLeft: 0 },
+      isHost: false,
 
       /* 메서드 */
+
+       setIsHost: (value) => {
+        set((s) => {
+          s.isHost = value;
+        });
+      },
+
       setAll: ({ groups, parts, room }) =>
         set((s) => {
           s.todoGroups = groups;

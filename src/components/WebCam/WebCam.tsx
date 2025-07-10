@@ -4,82 +4,104 @@ import VoiceIcon from '@/public/svgs/VoiceIcon.svg';
 import ChiefIcon from '@/public/svgs/chief_fire.svg';
 import SelectIcon from '@/public/svgs/select.svg';
 import NoneIcon from '@/public/svgs/none.svg';
-import { Participant } from '@/types/room';
-import WebCamMedia from '@/components/webcamPreview/WebCamMedia';
+import { StreamManager, Publisher } from 'openvidu-browser';
+import { useRoomStore } from '@/stores/roomStore';
+import { useOpenVidu } from '@/hooks/useOpenVidu';
+import { useOpenViduControls } from '@/hooks/useOpenViduControls';
 
 interface WebCamTileProps {
-  participant: Participant;
-  isLocal?: boolean;
-  onToggleMedia: (mediaType: 'video' | 'audio', status: boolean) => void;
-  adminUsername: string;
-  onOpenDelegationModal: () => void;
-  onSetWorkStatus: (status: boolean) => void;
-  onShowNotDelegationModal: () => void;
+  streamManager: StreamManager;
+  isLocal: boolean;
+  toggleCamera?: () => void;
+  toggleMic?: () => void;
 }
 
-const WebCamTile = ({
-  participant,
-  isLocal = false,
-  onToggleMedia,
-  adminUsername,
-  onOpenDelegationModal,
-  onSetWorkStatus,
-  onShowNotDelegationModal,
-}: WebCamTileProps) => {
+const WebCamTile = ({ streamManager, isLocal }: WebCamTileProps) => {
   const [statusOpen, setStatusOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
-  const camStatus = participant.camStatus;
-  const micStatus = participant.micStatus;
-  const isWorking = participant.isWorking;
+  const adminUsername = useRoomStore((state) => state.adminUsername);
+  const myUsername = useRoomStore((state) => state.myUsername);
+  const [isWorking, setIsWorking] = useState(true);
+  const { toggleMic, toggleCam } = useOpenViduControls();
+  // const [camStatus, setCamStatus] = useState(true);
+  // const [micStatus, setMicStatus] = useState(true);
+  const videoActive = isLocal
+    ? streamManager.stream.videoActive // 나의 publisher
+    : true;
 
-  const setParticipantStatus = (working: boolean) => {
+  const audioActive = isLocal ? streamManager.stream.audioActive : true;
+
+  const nickname = JSON.parse(streamManager.stream.connection.data).clientData;
+  const isAdmin = nickname === adminUsername;
+  const isMe = nickname === myUsername;
+
+  useEffect(() => {
+    if (videoRef.current && streamManager) {
+      try {
+        streamManager.addVideoElement(videoRef.current);
+      } catch (error) {
+        console.error('Error adding video element:', error);
+      }
+    }
+
+    return () => {
+      if (videoRef.current && streamManager && streamManager.videos) {
+        const videoElementIndex = streamManager.videos.findIndex(
+          (video) => video.video === videoRef.current,
+        );
+        if (videoElementIndex > -1) {
+          streamManager.videos.splice(videoElementIndex, 1);
+        }
+      }
+    };
+  }, [streamManager]);
+
+  // const handleToggleCamera = () => {
+  //   if (!isMe || !toggleCamera) return;
+  //   toggleCamera();
+  //   setCamStatus((prev) => !prev);
+  // };
+
+  // const handleToggleMic = () => {
+  //   if (!isMe || !toggleMic) return;
+  //   toggleMic();
+  //   setMicStatus((prev) => !prev);
+  // };
+
+  const handleWorkStatus = (working: boolean) => {
+    setIsWorking(working);
     setStatusOpen(false);
-    onSetWorkStatus(working);
   };
 
-  const toggleCamera = () => {
-    if (!isLocal) return;
-    onToggleMedia('video', !camStatus);
-  };
-
-  const toggleMic = () => {
-    if (!isLocal) return;
-    onToggleMedia('audio', !micStatus);
-  };
-
-  // 캠/마이크 실시간 동기화 보완용
-  useEffect(() => {
-    participant.stream?.getVideoTracks().forEach((track) => {
-      track.enabled = camStatus;
-    });
-  }, [camStatus, participant.stream]);
-
-  useEffect(() => {
-    participant.stream?.getAudioTracks().forEach((track) => {
-      track.enabled = micStatus;
-    });
-  }, [micStatus, participant.stream]);
-
+  if (!streamManager || !streamManager.stream) {
+    return null;
+  }
+  // 카메라 꺼진 서버에서 주는데 안받아옴
   return (
     <div className="relative flex h-[144px] w-[256px] flex-shrink-0 flex-col justify-end rounded-[20px] bg-[#3D3D3D] lg:h-[202.5px] lg:w-[360px] xl:h-[270px] xl:w-[480px]">
-      {participant.camStatus && participant.stream ? (
-        <div className="absolute inset-0 z-0">
-          <WebCamMedia stream={participant.stream} isMirror={isLocal} />
-        </div>
+      {videoActive ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isLocal}
+          className="absolute inset-0 z-0 h-full w-full rounded-[20px] object-cover"
+        />
       ) : (
         <span className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[10.67px] font-semibold tracking-[-0.4px] text-[rgba(255,255,255,0.20)] select-none lg:text-[15px] xl:text-[20px]">
           카메라가 꺼져있습니다
         </span>
       )}
 
-      {participant.isAdmin && (
+      {isAdmin && (
         <div className="absolute top-[20px] bottom-[215px] left-[21px] flex flex-col items-center gap-[5px]">
           <button
             onClick={() => {
-              if (isLocal && participant.isAdmin) {
-                onOpenDelegationModal();
+              if (isMe && isAdmin) {
+                // 방장 위임 모달 열기 - 아이콘이 떠야 확인을 하지.
               } else {
-                onShowNotDelegationModal();
+                // 위임 불가 알림
               }
             }}
           >
@@ -91,11 +113,11 @@ const WebCamTile = ({
 
       <div className="absolute bottom-[30px] left-[30px] flex w-[calc(100%-60px)] items-center">
         <span className="max-w-[200px] truncate text-[20px] font-semibold text-white">
-          {participant.username}
+          {nickname}
         </span>
 
         <div className="ml-auto flex items-center">
-          {isLocal && (
+          {isMe && (
             <div className="relative">
               <button
                 onClick={() => setStatusOpen(!statusOpen)}
@@ -110,10 +132,7 @@ const WebCamTile = ({
               {statusOpen && (
                 <div className="absolute top-full left-0 z-50 inline-flex h-[90px] flex-col items-start justify-between gap-[16px] rounded-[10px] border border-[#E8E8E8] bg-white p-[20px]">
                   <div className="flex items-center gap-[10px]">
-                    <button
-                      onClick={() => setParticipantStatus(true)}
-                      className="flex items-center"
-                    >
+                    <button onClick={() => handleWorkStatus(true)} className="flex items-center">
                       {isWorking ? <SelectIcon /> : <NoneIcon />}
                     </button>
                     <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
@@ -121,10 +140,7 @@ const WebCamTile = ({
                     </span>
                   </div>
                   <div className="flex items-center gap-[10px]">
-                    <button
-                      onClick={() => setParticipantStatus(false)}
-                      className="flex items-center"
-                    >
+                    <button onClick={() => handleWorkStatus(false)} className="flex items-center">
                       {!isWorking ? <SelectIcon /> : <NoneIcon />}
                     </button>
                     <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
@@ -137,10 +153,10 @@ const WebCamTile = ({
           )}
 
           <button
-            onClick={toggleCamera}
+            onClick={toggleCam}
             className="ml-[15px] flex h-[40px] w-[40px] items-center justify-center rounded bg-[rgba(95,95,95,0.50)] backdrop-blur-[2px]"
           >
-            <WebcamCamera width={24} height={24} style={{ opacity: camStatus ? 1 : 0.2 }} />
+            <WebcamCamera width={24} height={24} style={{ opacity: videoActive ? 1 : 0.2 }} />
           </button>
 
           <button
@@ -151,7 +167,7 @@ const WebCamTile = ({
               width={14}
               height={20}
               className="absolute top-[10px] right-[13px] bottom-[10px] left-[13px]"
-              style={{ opacity: micStatus ? 1 : 0.2 }}
+              style={{ opacity: audioActive ? 1 : 0.2 }}
             />
           </button>
         </div>

@@ -8,14 +8,12 @@ import TodoSection from '@/components/todo/TodoSection';
 import WorkspaceHeader from '@/components/Header/WorkSpaceHeader';
 import Sidebar from '@/components/Sidebar/Sidebar';
 import WebCamTile from '@/components/WebCam/WebCam';
-
 import DelegationModal from '@/components/WebCam/modal/DelegationModal';
 import NotDelegationModal from '@/components/WebCam/modal/NotDelegationModal';
 
 import { leaveRoom } from '@/apis/room';
 import { useRoomSync } from '@/hooks/room/useRoomSync';
-import { useGroupCall } from '@/hooks/useGroupCall';
-import type { Participant } from '@/types/room';
+import { useOpenVidu } from '@/hooks/useOpenVidu';
 import { useRoomStore } from '@/stores/todo-store';
 
 const MAX_VISIBLE = 2;
@@ -28,6 +26,11 @@ const RoomPage = () => {
   const isHost = from === 'create';
   const camStatus = cam !== 'false';
   const micStatus = mic !== 'false';
+
+  useEffect(() => {
+    useRoomStore.getState().setIsHost(isHost);
+  }, [isHost]);
+
   useRoomSync(roomId);
 
   const todoGroups = useRoomStore((s) => s.todoGroups);
@@ -46,52 +49,46 @@ const RoomPage = () => {
   const myUserId = me?.userId ?? 0;
   const myUsername = me?.username ?? '';
 
-  const {
-    participants: callParticipants,
-    toggleMedia,
-    delegateAdmin,
-    adminUsername,
-    leaveRoom: leaveGroupCall,
-    openDelegationModal,
-    setParticipantWorkStatus,
-    isDelegationOpen,
-    setIsDelegationOpen,
-    selectedDelegateId,
-    setSelectedDelegateId,
-  } = useGroupCall({
-    roomId: Number(roomId),
-    myUserId,
-    myUsername,
-    camStatus,
-    micStatus,
-    isHost,
-    initialParticipants: participants,
-  });
+  const { session, publisher, subscribers, joinSession, leaveSession, toggleCam, toggleMic } =
+    useOpenVidu({
+      sessionId: String(roomId),
+      userName: myUsername,
+    });
+
+  useEffect(() => {
+    if (session && roomId && myUsername) {
+      joinSession();
+    }
+  }, [session, roomId, myUsername]);
+
+  const handleLeaveRoom = async () => {
+    try {
+      await leaveRoom(roomId);
+      leaveSession();
+      router.push('/myhome');
+    } catch (e) {
+      alert('방 퇴장 실패');
+    }
+  };
+
+  useEffect(() => {
+    if (roomId && myUsername && !session) {
+      joinSession();
+    }
+  }, [roomId, myUsername, session, joinSession]);
 
   const [slideIndex, setSlideIndex] = useState(0);
   const [isNotDelegationModalOpen, setIsNotDelegationModalOpen] = useState(false);
 
   const meGroup = todoGroups.find((g) => g.isMyGoal);
-  const meParticipant = callParticipants.find((p) => p.isMyGoal);
-
   const othersTodo = todoGroups.filter((g) => !g.isMyGoal);
-  const othersCall = callParticipants.filter((p) => !p.isMyGoal);
-
   const sortedOthersTodo = [...othersTodo].sort((a, b) => a.userId - b.userId);
   const visibleTodoSlide = sortedOthersTodo.slice(slideIndex, slideIndex + MAX_VISIBLE);
 
-  const sortedCamTiles = [...othersCall].sort((a, b) => a.userId - b.userId);
-  const visibleCallSlide = sortedCamTiles.slice(slideIndex, slideIndex + MAX_VISIBLE);
-
-  /* 실제 화면에 보여줄 배열 */
   const visibleTodoGroups = meGroup ? [meGroup, ...visibleTodoSlide] : visibleTodoSlide;
-  const visibleCallTiles = meParticipant ? [meParticipant, ...visibleCallSlide] : visibleCallSlide;
-
-  /* 화살표 표시 조건 */
   const canSlideLeft = slideIndex > 0;
   const canSlideRight = slideIndex + MAX_VISIBLE < othersTodo.length;
 
-  /* 슬라이드 인덱스 보정 (새 유저 추가 등) */
   useEffect(() => {
     if (othersTodo.length > MAX_VISIBLE && slideIndex + MAX_VISIBLE >= othersTodo.length) {
       setSlideIndex(Math.max(0, othersTodo.length - MAX_VISIBLE));
@@ -108,17 +105,6 @@ const RoomPage = () => {
     return null;
   }
 
-  const handleLeaveRoom = async () => {
-    try {
-      await leaveRoom(roomId as string);
-      leaveGroupCall();
-
-      router.push('/myhome');
-    } catch (e) {
-      alert('방 퇴장 실패');
-    }
-  };
-
   return (
     <div className="bg-gray3 relative flex h-screen w-screen flex-1 items-center justify-center gap-5 pl-[106.667px] lg:pl-[150px] xl:pl-[200px]">
       <WorkspaceHeader roomName={roomData.roomName} roomSeq={roomData.roomSeq} isOwner={isHost} />
@@ -131,31 +117,26 @@ const RoomPage = () => {
         onCloseAlert={() => setAlertVisible(false)}
       />
       <div className="relative flex h-full w-[789.33px] flex-col justify-center pt-[53.333px] lg:w-[1110px] lg:pt-[75px] xl:w-[1480px] xl:pt-[100px]">
-        {/* 웹캠 영역 */}
         <div className="mb-[10.67px] flex w-full gap-[10.67px] lg:mb-[15px] lg:gap-[15px] xl:mb-5 xl:gap-5">
-          {Array.isArray(callParticipants) &&
-            visibleCallTiles.map((participant: Participant) => (
-              <WebCamTile
-                key={participant.userId}
-                participant={participant}
-                isLocal={participant.userId === myUserId}
-                adminUsername={adminUsername}
-                onToggleMedia={toggleMedia}
-                onOpenDelegationModal={() => {
-                  if (isHost) {
-                    openDelegationModal();
-                  } else {
-                    setIsNotDelegationModalOpen(true);
-                  }
-                }}
-                onShowNotDelegationModal={() => setIsNotDelegationModalOpen(true)}
-                onSetWorkStatus={setParticipantWorkStatus}
-              />
-            ))}
+          {publisher && (
+            <WebCamTile
+              key="me"
+              streamManager={publisher}
+              isLocal={true}
+              toggleCamera={toggleCam}
+              toggleMic={toggleMic}
+            />
+          )}
+          {subscribers.map((subscriber, index) => (
+            <WebCamTile
+              key={subscriber.stream.connection.connectionId}
+              streamManager={subscriber}
+              isLocal={false}
+            />
+          ))}
         </div>
 
         <div className="flex">
-          {/* 왼쪽 화살표 */}
           {canSlideLeft && todoGroups.length > 3 && (
             <Arrow
               onClick={() => setSlideIndex((prev) => prev - 1)}
@@ -163,27 +144,10 @@ const RoomPage = () => {
             />
           )}
 
-          {isDelegationOpen && (
-            <DelegationModal
-              participants={callParticipants}
-              currentUserId={myUserId}
-              selectedUserId={selectedDelegateId}
-              onSelect={setSelectedDelegateId}
-              onClose={() => setIsDelegationOpen(false)}
-              onConfirm={() => {
-                if (selectedDelegateId) {
-                  delegateAdmin(selectedDelegateId);
-                  setIsDelegationOpen(false);
-                }
-              }}
-            />
-          )}
-
           {isNotDelegationModalOpen && (
             <NotDelegationModal onClose={() => setIsNotDelegationModalOpen(false)} />
           )}
 
-          {/* TodoSection 리스트 */}
           <div className="flex w-[789.33px] gap-[10.67px] lg:w-[1110px] lg:gap-[15px] xl:w-[1480px] xl:gap-5">
             {visibleTodoGroups.map((g) => (
               <TodoSection
@@ -199,7 +163,6 @@ const RoomPage = () => {
             ))}
           </div>
 
-          {/* 오른쪽 화살표 */}
           {canSlideRight && todoGroups.length > 3 && (
             <Arrow
               onClick={() => setSlideIndex((prev) => prev + 1)}
