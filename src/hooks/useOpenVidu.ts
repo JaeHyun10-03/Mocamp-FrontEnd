@@ -17,16 +17,20 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
 
   const OVRef = useRef<OpenVidu | null>(null);
 
-  const extractToken = (rawToken: string): string => {
-    try {
-      const url = new URL(rawToken.replace('ws://', 'wss://').replace(':4443', ''));
-      const tokenParam = url.searchParams.get('token');
-      if (!tokenParam) throw new Error('Invalid token format');
-      return tokenParam;
-    } catch (error) {
-      return rawToken;
-    }
-  };
+const normalizeToken = (rawToken: string): string => {
+  try {
+    // wss 프로토콜 강제 적용 + 포트 제거
+    const normalized = rawToken
+      .replace('ws://', 'wss://')
+      .replace('http://', 'wss://')
+      .replace(':4443', '');
+    return normalized;
+  } catch (error) {
+    console.error('[OpenVidu] normalizeToken error:', error);
+    return rawToken;
+  }
+};
+
 
   useEffect(() => {
     if (!OVRef.current) {
@@ -107,7 +111,7 @@ const joinSession = async () => {
 
     const tokenRes = await apiWithToken.post(`/api/sessions/${sessionId}/connections`);
     const rawToken = tokenRes.data;
-    const token = extractToken(rawToken); 
+    const token = normalizeToken(rawToken);
 
     await session.connect(token, { clientData: userName });
 
