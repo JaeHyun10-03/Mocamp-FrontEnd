@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-
 import { Publisher } from 'openvidu-browser';
+
 interface OpenViduState {
   publisher: Publisher | null;
   setPublisher: (publisher: Publisher) => void;
