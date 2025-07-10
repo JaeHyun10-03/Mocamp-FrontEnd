@@ -1,12 +1,15 @@
 import { create } from 'zustand';
-import { Publisher } from 'openvidu-browser';
+import { Session, Publisher } from 'openvidu-browser';
 
 interface OpenViduState {
+  session: Session | null;
   publisher: Publisher | null;
-  setPublisher: (publisher: Publisher) => void;
+  setSession: (session: Session | null) => void;
+  setPublisher: (publisher: Publisher | null) => void;
 }
-
 export const useOpenViduStore = create<OpenViduState>((set) => ({
+  session: null,
   publisher: null,
+  setSession: (session) => set({ session }),
   setPublisher: (publisher) => set({ publisher }),
 }));

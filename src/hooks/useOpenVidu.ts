@@ -19,11 +19,13 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
 
 const normalizeToken = (rawToken: string): string => {
   try {
+    console.log('[OpenVidu] rawToken:', rawToken);
     // wss 프로토콜 강제 적용 + 포트 제거
     const normalized = rawToken
       .replace('ws://', 'wss://')
       .replace('http://', 'wss://')
       .replace(':4443', '');
+       console.log('[OpenVidu] normalizedToken:', normalized);
     return normalized;
   } catch (error) {
     console.error('[OpenVidu] normalizeToken error:', error);
@@ -94,12 +96,30 @@ const joinSession = async () => {
   if (session) {
     session.disconnect();
   }
-
   const newOV = initOpenVidu();
   OVRef.current = newOV;
+  const newSession = newOV.initSession();
 
-  if (!session || !userName) {
-    console.warn('[OpenVidu] joinSession: Session or userName not ready.', session, userName);
+  newSession.on('streamCreated', (event) => {
+    const subscriber = newSession.subscribe(event.stream, undefined);
+    setSubscribers((prev) => [...prev, subscriber]);
+  });
+
+  newSession.on('streamDestroyed', (event) => {
+    setSubscribers((prev) =>
+      prev.filter((sub) => sub.stream.connection.connectionId !== event.stream.connection.connectionId)
+    );
+  });
+
+  newSession.on('exception', (exception) => {
+    console.warn('[OpenVidu] Session exception:', exception);
+  });
+
+  setSession(newSession); 
+  useOpenViduStore.getState().setSession(newSession); 
+
+  if (!newSession || !userName) {
+    console.warn('[OpenVidu] joinSession: Session or userName not ready.', newSession, userName);
     return;
   }
 
@@ -113,7 +133,7 @@ const joinSession = async () => {
     const rawToken = tokenRes.data;
     const token = normalizeToken(rawToken);
 
-    await session.connect(token, { clientData: userName });
+    await newSession.connect(token, { clientData: userName });
 
     const ovInstance = getOVInstance();
     if (!ovInstance) {
@@ -138,8 +158,9 @@ const joinSession = async () => {
       insertMode: 'APPEND',
     });
 
-    await session.publish(newPublisher);
+    await newSession.publish(newPublisher);
     console.log('[OpenVidu] Publisher successfully published');
+
     setPublisher(newPublisher);
     useOpenViduStore.getState().setPublisher(newPublisher);
   } catch (error) {
