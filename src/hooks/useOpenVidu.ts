@@ -17,6 +17,17 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
 
   const OVRef = useRef<OpenVidu | null>(null);
 
+  const extractToken = (rawToken: string): string => {
+    try {
+      const url = new URL(rawToken.replace('ws://', 'wss://').replace(':4443', ''));
+      const tokenParam = url.searchParams.get('token');
+      if (!tokenParam) throw new Error('Invalid token format');
+      return tokenParam;
+    } catch (error) {
+      return rawToken;
+    }
+  };
+
   useEffect(() => {
     if (!OVRef.current) {
       OVRef.current = initOpenVidu();
@@ -93,14 +104,12 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
         customSessionId: sessionId,
       });
       const sessionIdFromServer = sessionRes.data;
+      const tokenRes = await apiWithToken.post(`/api/sessions/${sessionId}/connections`);
+      const rawToken = tokenRes.data;
+      const token = extractToken(rawToken); //함수 조건 3개 충족
+      await session.connect(token, { clientData: userName });
 
-      const tokenRes = await apiWithToken.post(`/api/sessions/${sessionIdFromServer}/connections`);
-
-      const token = tokenRes.data;
-
-      const secureToken = token.startsWith('ws://')
-        ? 'wss://' + token.slice(5).replace(':4443', '')
-        : token;
+      const secureToken = rawToken.includes('token=') ? rawToken.split('token=')[1] : rawToken;
 
       await session.connect(secureToken, { clientData: userName });
 
