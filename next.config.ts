@@ -3,7 +3,12 @@ const nextConfig = {
   reactStrictMode: true,
 
   images: {
-    domains: ['k.kakaocdn.net', 'ssl.pstatic.net', 'lh3.googleusercontent.com'], // ✅ 외부 이미지 도메인 추가
+    domains: [
+      'k.kakaocdn.net',
+      'ssl.pstatic.net',
+      'lh3.googleusercontent.com',
+      'b-cube-web.s3.ap-northeast-2.amazonaws.com', // ✅ 여기에 추가
+    ],
   },
 
   async redirects() {

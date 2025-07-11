@@ -1,6 +1,7 @@
 import CloseButton from '@/public/svgs/CloseButton.svg';
 import { useState, useRef } from 'react';
 import { updateProfile } from '@/apis/myhome';
+import { useMyhomeStore } from '@/stores/myhome-store';
 
 interface ProfileModalProps {
   username: string;
@@ -13,6 +14,7 @@ const ProfileModal = ({ username, profileImage, onClose }: ProfileModalProps) =>
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { setProfileImage, setUsername } = useMyhomeStore();
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) {
@@ -54,7 +56,11 @@ const ProfileModal = ({ username, profileImage, onClose }: ProfileModalProps) =>
   const handleSubmit = async () => {
     try {
       const usernameToSend = newUsername !== username ? newUsername : null;
-      await updateProfile(usernameToSend, selectedFile);
+      const res = await updateProfile(usernameToSend, selectedFile);
+      // 성공 시 global state 반영
+      if (usernameToSend) setUsername(usernameToSend);
+      if (selectedImage) setProfileImage(selectedImage); // 서버에서 URL 응답받으면 그걸로
+
       onClose();
     } catch (error) {
       console.error('프로필 수정 실패:', error);

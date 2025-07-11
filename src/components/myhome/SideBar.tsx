@@ -28,7 +28,7 @@ const SideBar = ({ profileImage, username }: SideBarProps) => {
       </div>
 
       <div className="relative mt-[3.125rem] flex h-[12.5rem] w-[12.5rem] items-center justify-center rounded-full border-2 border-[#27CFA5]">
-        <Image
+        <img
           src={profileImage.length > 0 ? profileImage : '/defaultProfile2.png'}
           width={200}
           height={197}

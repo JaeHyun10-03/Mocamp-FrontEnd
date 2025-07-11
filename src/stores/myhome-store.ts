@@ -1,22 +1,5 @@
-/* 마이홈 상태 관리 */
 import { ChartType } from '@/types/myhome';
 import { create } from 'zustand';
-
-export interface Myhome {
-  profileImage: string;
-  username: string;
-  goalList: [];
-  roomList: Room[];
-  timeList: [];
-  totalDurationMinute: number;
-  totalNumberOfGoals: number;
-  setMyhome: (data: any) => void;
-}
-
-export interface DropDown {
-  selectedType: ChartType;
-  setSelectedType: (selectedType: ChartType) => void;
-}
 
 export interface Room {
   roomId: number;
@@ -27,6 +10,24 @@ export interface Room {
   startedAt: string;
 }
 
+export interface Myhome {
+  profileImage: string;
+  username: string;
+  goalList: [];
+  roomList: Room[];
+  timeList: [];
+  totalDurationMinute: number;
+  totalNumberOfGoals: number;
+  setMyhome: (data: any) => void;
+  setUsername: (username: string) => void;
+  setProfileImage: (image: string) => void;
+}
+
+export interface DropDown {
+  selectedType: ChartType;
+  setSelectedType: (selectedType: ChartType) => void;
+}
+
 export const useMyhomeStore = create<Myhome>((set) => ({
   profileImage: '',
   username: '',
@@ -35,6 +36,7 @@ export const useMyhomeStore = create<Myhome>((set) => ({
   timeList: [],
   totalDurationMinute: 0,
   totalNumberOfGoals: 0,
+
   setMyhome: (data) =>
     set(() => ({
       profileImage: data.profileImage,
@@ -45,6 +47,9 @@ export const useMyhomeStore = create<Myhome>((set) => ({
       totalDurationMinute: data.totalDurationMinute,
       totalNumberOfGoals: data.totalNumberOfGoals,
     })),
+
+  setUsername: (username) => set({ username }),
+  setProfileImage: (image) => set({ profileImage: image }),
 }));
 
 export const useDropDown = create<DropDown>((set) => ({

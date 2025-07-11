@@ -36,7 +36,7 @@ const Total = ({
         <div className="flex items-center gap-5">
           {roomList.length > 0 ? (
             roomList
-              .slice(-2) // 마지막 2개만 가져오기
+              .slice(0, 2) // 마지막 2개만 가져오기
               .map((room: Room) => (
                 <ParticipatedCard
                   key={room.roomId}

@@ -15,12 +15,15 @@ import { leaveRoom } from '@/apis/room';
 import { useRoomSync } from '@/hooks/room/useRoomSync';
 import { useOpenVidu } from '@/hooks/useOpenVidu';
 import { useRoomStore } from '@/stores/todo-store';
+import { useTutorial } from '@/stores/tutorial-store';
+import Tutorial from '@/components/WebCam/tutorial/Tutorial';
 
 const MAX_VISIBLE = 2;
 
 const RoomPage = () => {
   const router = useRouter();
   const { id, from, cam, mic } = router.query;
+  const { step, startTutorial } = useTutorial();
 
   const roomId = Array.isArray(id) ? id[0] : id || '';
   const isHost = from === 'create';
@@ -95,6 +98,14 @@ const RoomPage = () => {
     }
   }, [othersTodo.length, slideIndex]);
 
+  useEffect(() => {
+    const record = localStorage.getItem('tutorial');
+    if (!record) {
+      startTutorial();
+      localStorage.setItem('tutorial', '1');
+    }
+  }, [step]);
+
   if (
     !router.isReady ||
     !roomId ||
@@ -106,72 +117,82 @@ const RoomPage = () => {
   }
 
   return (
-    <div className="bg-gray3 relative flex h-screen w-screen flex-1 items-center justify-center gap-5 pl-[106.667px] lg:pl-[150px] xl:pl-[200px]">
-      <WorkspaceHeader roomName={roomData.roomName} roomSeq={roomData.roomSeq} isOwner={isHost} />
-      <Sidebar
-        startTime={roomData.startedAt}
-        endTime={roomData.endedAt}
-        participants={participants.length}
-        onLeaveRoom={handleLeaveRoom}
-        alertInfo={alertInfo}
-        onCloseAlert={() => setAlertVisible(false)}
-      />
-      <div className="relative flex h-full w-[789.33px] flex-col justify-center pt-[53.333px] lg:w-[1110px] lg:pt-[75px] xl:w-[1480px] xl:pt-[100px]">
-        <div className="mb-[10.67px] flex w-full gap-[10.67px] lg:mb-[15px] lg:gap-[15px] xl:mb-5 xl:gap-5">
-          {publisher && (
-            <WebCamTile
-              key="me"
-              streamManager={publisher}
-              isLocal={true}
-              toggleCamera={toggleCam}
-              toggleMic={toggleMic}
-            />
-          )}
-          {subscribers.map((subscriber, index) => (
-            <WebCamTile
-              key={subscriber.stream.connection.connectionId}
-              streamManager={subscriber}
-              isLocal={false}
-            />
-          ))}
-        </div>
+    <>
+      {Number(step) > 0 ? (
+        <Tutorial />
+      ) : (
+        <div className="bg-gray3 relative flex h-screen w-screen flex-1 items-center justify-center gap-5 pl-[106.667px] lg:pl-[150px] xl:pl-[200px]">
+          <WorkspaceHeader
+            roomName={roomData.roomName}
+            roomSeq={roomData.roomSeq}
+            isOwner={isHost}
+          />
+          <Sidebar
+            startTime={roomData.startedAt}
+            endTime={roomData.endedAt}
+            participants={participants.length}
+            onLeaveRoom={handleLeaveRoom}
+            alertInfo={alertInfo}
+            onCloseAlert={() => setAlertVisible(false)}
+          />
+          <div className="relative flex h-full w-[789.33px] flex-col justify-center pt-[53.333px] lg:w-[1110px] lg:pt-[75px] xl:w-[1480px] xl:pt-[100px]">
+            <div className="mb-[10.67px] flex w-full gap-[10.67px] lg:mb-[15px] lg:gap-[15px] xl:mb-5 xl:gap-5">
+              {publisher && (
+                <WebCamTile
+                  key="me"
+                  streamManager={publisher}
+                  isLocal={true}
+                  toggleCamera={toggleCam}
+                  toggleMic={toggleMic}
+                />
+              )}
+              {subscribers.map((subscriber, index) => (
+                <WebCamTile
+                  key={subscriber.stream.connection.connectionId}
+                  streamManager={subscriber}
+                  isLocal={false}
+                />
+              ))}
+            </div>
 
-        <div className="flex">
-          {canSlideLeft && todoGroups.length > 3 && (
-            <Arrow
-              onClick={() => setSlideIndex((prev) => prev - 1)}
-              className="absolute top-1/2 left-[-48px] h-8 w-8 -translate-y-1/2 cursor-pointer lg:left-[-67.5px] lg:h-[45px] lg:w-[45px] xl:left-[-90px] xl:h-[60px] xl:w-[60px]"
-            />
-          )}
+            <div className="flex">
+              {canSlideLeft && todoGroups.length > 3 && (
+                <Arrow
+                  onClick={() => setSlideIndex((prev) => prev - 1)}
+                  className="absolute top-1/2 left-[-48px] h-8 w-8 -translate-y-1/2 cursor-pointer lg:left-[-67.5px] lg:h-[45px] lg:w-[45px] xl:left-[-90px] xl:h-[60px] xl:w-[60px]"
+                />
+              )}
 
-          {isNotDelegationModalOpen && (
-            <NotDelegationModal onClose={() => setIsNotDelegationModalOpen(false)} />
-          )}
+              {isNotDelegationModalOpen && (
+                <NotDelegationModal onClose={() => setIsNotDelegationModalOpen(false)} />
+              )}
 
-          <div className="flex w-[789.33px] gap-[10.67px] lg:w-[1110px] lg:gap-[15px] xl:w-[1480px] xl:gap-5">
-            {visibleTodoGroups.map((g) => (
-              <TodoSection
-                key={g.userId}
-                userId={g.userId}
-                resolution={g.resolution}
-                isMyGoal={g.isMyGoal}
-                isSecret={g.isSecret}
-                roomId={String(roomId)}
-                goals={g.goals}
-                setTodos={(updated) => setTodosByUser(g.userId, updated)}
-              />
-            ))}
+              <div className="flex w-[789.33px] gap-[10.67px] lg:w-[1110px] lg:gap-[15px] xl:w-[1480px] xl:gap-5">
+                {visibleTodoGroups.map((g) => (
+                  <TodoSection
+                    key={g.userId}
+                    userId={g.userId}
+                    resolution={g.resolution}
+                    isMyGoal={g.isMyGoal}
+                    isSecret={g.isSecret}
+                    roomId={String(roomId)}
+                    goals={g.goals}
+                    setTodos={(updated) => setTodosByUser(g.userId, updated)}
+                  />
+                ))}
+              </div>
+
+              {canSlideRight && todoGroups.length > 3 && (
+                <Arrow
+                  onClick={() => setSlideIndex((prev) => prev + 1)}
+                  className="absolute top-1/2 right-[-48px] h-8 w-8 -translate-y-1/2 rotate-180 cursor-pointer lg:right-[-67.5px] lg:h-[45px] lg:w-[45px] xl:right-[-90px] xl:h-[60px] xl:w-[60px]"
+                />
+              )}
+            </div>
           </div>
-
-          {canSlideRight && todoGroups.length > 3 && (
-            <Arrow
-              onClick={() => setSlideIndex((prev) => prev + 1)}
-              className="absolute top-1/2 right-[-48px] h-8 w-8 -translate-y-1/2 rotate-180 cursor-pointer lg:right-[-67.5px] lg:h-[45px] lg:w-[45px] xl:right-[-90px] xl:h-[60px] xl:w-[60px]"
-            />
-          )}
         </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 
