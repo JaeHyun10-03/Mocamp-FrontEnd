@@ -17,6 +17,7 @@ import { useOpenVidu } from '@/hooks/useOpenVidu';
 import { useRoomStore } from '@/stores/todo-store';
 import { useTutorial } from '@/stores/tutorial-store';
 import Tutorial from '@/components/WebCam/tutorial/Tutorial';
+import { useRoomStoreName } from '@/stores/roomStore';
 
 const MAX_VISIBLE = 2;
 
@@ -27,6 +28,7 @@ const RoomPage = () => {
 
   const roomId = Array.isArray(id) ? id[0] : id || '';
   const isHost = from === 'create';
+  
   const camStatus = cam !== 'false';
   const micStatus = mic !== 'false';
 
@@ -41,6 +43,7 @@ const RoomPage = () => {
   const roomData = useRoomStore((s) => s.roomData);
   const alertInfo = useRoomStore((s) => s.alertInfo);
   const notice = useRoomStore((s) => s.notice);
+  const { setMyUsername } = useRoomStoreName();
 
   const setAlert = useRoomStore((s) => s.setAlert);
   const setAlertVisible = (visible: boolean) => {
@@ -57,6 +60,12 @@ const RoomPage = () => {
       sessionId: String(roomId),
       userName: myUsername,
     });
+
+  useEffect(() => {
+    if (me?.username) {
+      setMyUsername(me.username);
+    }
+  }, [me]);
 
   useEffect(() => {
     if (session && roomId && myUsername) {
@@ -126,6 +135,10 @@ const RoomPage = () => {
             roomName={roomData.roomName}
             roomSeq={roomData.roomSeq}
             isOwner={isHost}
+            onResetTutorial={() => {
+              localStorage.setItem('tutorial', '0');
+              startTutorial();
+            }}
           />
           <Sidebar
             startTime={roomData.startedAt}
@@ -149,18 +162,22 @@ const RoomPage = () => {
                   participants={participants}
                 />
               )}
-              {subscribers.map((subscriber, index) => (
-                <WebCamTile
-                  key={subscriber.stream.connection.connectionId}
-                  streamManager={subscriber}
-                  isLocal={false}
-                  roomId={String(roomId)}
-                  myUserId={myUserId}
-                  participants={participants}
-                />
-              ))}
+              {subscribers
+                .filter((subscriber) => {
+                  const nickname = JSON.parse(subscriber.stream.connection.data).clientData;
+                  return nickname !== myUsername;
+                })
+                .map((subscriber) => (
+                  <WebCamTile
+                    key={subscriber.stream.connection.connectionId}
+                    streamManager={subscriber}
+                    isLocal={false}
+                    roomId={String(roomId)}
+                    myUserId={myUserId}
+                    participants={participants}
+                  />
+                ))}
             </div>
-
             <div className="flex">
               {canSlideLeft && todoGroups.length > 3 && (
                 <Arrow

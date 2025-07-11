@@ -85,14 +85,33 @@ export const useRoomSync = (roomId?: string) => {
       });
     },
 
+    /*  카메라 상태 변경 ------------------- */
+    onCamStatusUpdate: (d) => {
+      useRoomStore.setState((state) => {
+        state.participants = state.participants.map((p) =>
+          p.userId === d.userId ? { ...p, camStatus: d.camStatus } : p,
+        );
+      });
+    },
+
+    /*  마이크 상태 변경 ------------------- */
+    onMicStatusUpdate: (d: { userId: number; micStatus: boolean }) => {
+      useRoomStore.setState((state) => {
+        state.participants = state.participants.map((p) =>
+          p.userId === d.userId ? { ...p, micStatus: d.micStatus } : p,
+        );
+      });
+    },
+
     /*  작업 상태 변경 ------------------- */
     onWorkStatusUpdate: (d) => {
-    useRoomStore.setState((state) => {
-      state.participants = state.participants.map((p) =>
-        p.userId === d.userId ? { ...p, isWorking: d.workStatus } : p,
-      );
-    });
-  },
+      useRoomStore.setState((state) => {
+        state.participants = state.participants.map((p) =>
+          p.userId === d.userId ? { ...p, isWorking: d.workStatus } : p,
+        );
+      });
+    },
+
 
     /*  개별 목표 토글 ------------------- */
     onCompleteUpdate: (d) => toggleGoal(d.userId, d.goalId, d.isCompleted),

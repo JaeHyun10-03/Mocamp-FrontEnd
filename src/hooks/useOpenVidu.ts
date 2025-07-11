@@ -3,6 +3,8 @@ import { OpenVidu, Session, Publisher, StreamManager } from 'openvidu-browser';
 import { initOpenVidu, getOVInstance } from '@/libs/openviduClient';
 import { apiWithToken } from '@/apis/axios';
 import { useOpenViduStore } from '@/stores/openViduStore';
+import { useOpenViduControlsStore } from '@/stores/openViduControlsStore';
+
 interface UseOpenViduParams {
   sessionId: string;
   userName: string;
@@ -12,12 +14,13 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
   const [session, setSession] = useState<Session | null>(null);
   const [publisher, setPublisher] = useState<Publisher | null>(null);
   const [subscribers, setSubscribers] = useState<StreamManager[]>([]);
-  const [micStatus, setMicStatus] = useState(true);
-  const [camStatus, setCamStatus] = useState(true);
-  const { isCameraOn, isMicOn } = useOpenViduStore.getState();
+
+  const { isCameraOn, isMicOn } = useOpenViduControlsStore.getState(); // 전역 상태
+  const { setPublisher: setStorePublisher } = useOpenViduControlsStore.getState(); // tore method
 
   const OVRef = useRef<OpenVidu | null>(null);
 
+  // 1. 세션 초기화
   useEffect(() => {
     if (!OVRef.current) {
       OVRef.current = initOpenVidu();
@@ -30,7 +33,6 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
 
     newSession.on('streamCreated', (event) => {
       const stream = event.stream;
-
       if (
         !stream ||
         !stream.connection ||
@@ -75,6 +77,7 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
     };
   }, [sessionId, userName]);
 
+  // 2. 세션 참가
   const joinSession = async () => {
     if (!session || !userName) {
       console.warn('[OpenVidu] joinSession: Session or userName not ready.', session, userName);
@@ -100,15 +103,8 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
 
       const getVideoResolution = () => {
         const width = window.innerWidth;
-
-        if (width >= 1920) {
-          return '480x270';
-        }
-
-        if (width >= 1440) {
-          return '360x202';
-        }
-
+        if (width >= 1920) return '480x270';
+        if (width >= 1440) return '360x202';
         return '256x144';
       };
 
@@ -116,7 +112,7 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
         audioSource: undefined,
         videoSource: undefined,
         publishAudio: isMicOn,
-  publishVideo: isCameraOn,
+        publishVideo: isCameraOn,
         resolution: getVideoResolution(),
         frameRate: 30,
         insertMode: 'APPEND',
@@ -125,12 +121,14 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
       await session.publish(newPublisher);
       console.log('[OpenVidu] Publisher successfully published');
       setPublisher(newPublisher);
-      useOpenViduStore.getState().setPublisher(newPublisher);
+      useOpenViduStore.getState().setPublisher(newPublisher); // (기존 스토어 유지하는 경우)
+      setStorePublisher(newPublisher); // controls store에도 저장
     } catch (error) {
       console.error('[OpenVidu] joinSession error:', error);
     }
   };
 
+  // 3. 세션 종료
   const leaveSession = () => {
     if (session) {
       session.disconnect();
@@ -140,31 +138,13 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
     setSubscribers([]);
   };
 
-  // 미디어 스트림 트랙 스탑
-
-  // 카메라
-  const toggleMic = () => {
-    if (publisher) {
-      const isAudioActive = publisher.stream.audioActive;
-      publisher.publishAudio(!isAudioActive);
-    }
-  };
-
-  // 마이크
-  const toggleCam = () => {
-    if (publisher) {
-      const isVideoActive = publisher.stream.videoActive;
-      publisher.publishVideo(!isVideoActive);
-    }
-  };
-
   return {
     session,
     publisher,
     subscribers,
     joinSession,
     leaveSession,
-    toggleMic,
-    toggleCam,
+    toggleCam: useOpenViduControlsStore.getState().toggleCam,
+    toggleMic: useOpenViduControlsStore.getState().toggleMic,
   };
 };

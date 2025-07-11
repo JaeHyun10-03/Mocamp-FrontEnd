@@ -10,6 +10,8 @@ import { useOpenVidu } from '@/hooks/useOpenVidu';
 import { useOpenViduControls } from '@/hooks/useOpenViduControls';
 import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
 import type { Participant } from '@/types/room';
+import { useOpenViduControlsStore } from '@/stores/openViduControlsStore';
+
 
 interface WebCamTileProps {
   streamManager: StreamManager;
@@ -28,7 +30,8 @@ const WebCamTile = ({
   myUserId,
   participants,
 }: WebCamTileProps) => {
-  const { toggleCam, toggleMic, isCameraOn, isMicOn } = useOpenViduControls();
+  const { toggleCam, toggleMic, isCameraOn, isMicOn } = useOpenViduControlsStore();
+
   const [statusOpen, setStatusOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -38,12 +41,27 @@ const WebCamTile = ({
   const { updateWorkStatus } = useRoomPublisher(String(roomId));
   // const [camStatus, setCamStatus] = useState(true);
   // const [micStatus, setMicStatus] = useState(true);
-  const videoActive = isLocal ? isCameraOn : true;
-  const audioActive = isLocal ? isMicOn : true;
 
   const nickname = JSON.parse(streamManager.stream.connection.data).clientData;
   const isAdmin = nickname === adminUsername;
-  const isMe = nickname === myUsername;
+  const isMe = isLocal || nickname === myUsername;
+
+  console.log('🔍 nickname from stream:', nickname);
+  console.log('👤 myUsername from store:', myUsername);
+  console.log('✅ isMe 결과:', nickname === myUsername);
+
+  const participant = participants.find((p) => p.username === nickname); 
+
+const peerCamOn = participant?.camStatus ?? true;
+const peerMicOn = participant?.micStatus ?? true;
+const peerIsWorking = participant?.isWorking ?? true;
+
+
+  const videoActive = isLocal ? isCameraOn : peerCamOn;
+
+  const audioActive = isLocal ? isMicOn : peerMicOn;
+
+
 
   console.log('🔍 nickname from stream:', nickname);
   console.log('👤 myUsername from store:', myUsername);
@@ -53,25 +71,25 @@ const WebCamTile = ({
   const peerIsWorking = participant?.isWorking ?? true;
 
   useEffect(() => {
-    if (videoRef.current && streamManager) {
-      try {
-        streamManager.addVideoElement(videoRef.current);
-      } catch (error) {
-        console.error('Error adding video element:', error);
+  if (videoRef.current && streamManager && videoActive) {
+    try {
+      streamManager.addVideoElement(videoRef.current);
+    } catch (error) {
+      console.error('Error adding video element:', error);
+    }
+  }
+
+  return () => {
+    if (videoRef.current && streamManager && streamManager.videos) {
+      const index = streamManager.videos.findIndex(
+        (v) => v.video === videoRef.current,
+      );
+      if (index > -1) {
+        streamManager.videos.splice(index, 1);
       }
     }
-
-    return () => {
-      if (videoRef.current && streamManager && streamManager.videos) {
-        const videoElementIndex = streamManager.videos.findIndex(
-          (video) => video.video === videoRef.current,
-        );
-        if (videoElementIndex > -1) {
-          streamManager.videos.splice(videoElementIndex, 1);
-        }
-      }
-    };
-  }, [streamManager]);
+  };
+}, [streamManager, videoActive]);
 
   // const handleToggleCamera = () => {
   //   if (!isMe || !toggleCamera) return;

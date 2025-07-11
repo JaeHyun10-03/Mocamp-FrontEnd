@@ -11,6 +11,9 @@ interface RoomSubscriberHandlers {
   onAdminUpdate?: (payload: any) => void;
   onAlertUpdate?: (payload: any) => void;
   onWorkStatusUpdate?: (payload: any) => void;
+  onCamStatusUpdate?: (payload: any) => void;
+  onMicStatusUpdate?: (payload: any) => void;
+
 }
 
 export const useRoomSubscriber = (roomId: string | null, handlers: RoomSubscriberHandlers) => {
@@ -50,6 +53,13 @@ export const useRoomSubscriber = (roomId: string | null, handlers: RoomSubscribe
         case 'WORK_STATUS_UPDATED':
           handlers.onWorkStatusUpdate?.(data);
           break;
+        case 'CAM_STATUS_UPDATED':
+          handlers.onCamStatusUpdate?.(data);
+          break;
+        case 'MIC_STATUS_UPDATED':
+          handlers.onMicStatusUpdate?.(data);
+          break;
+
         default:
           console.warn('알 수 없는 메시지 타입:', data.type);
       }

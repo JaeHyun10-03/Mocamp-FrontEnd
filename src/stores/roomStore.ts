@@ -12,12 +12,15 @@ interface RoomStore {
   setIsHost: (isHost: boolean) => void;
 }
 
+
 export const useRoomStoreName = create<RoomStore>((set, get) => ({
   myUserId: null,
   myUsername: '',
   adminUsername: null,
   isAdmin: false,
   isHost: false,
+
+  
 
   setMyUserId: (id) => {
     const { adminUsername } = get();

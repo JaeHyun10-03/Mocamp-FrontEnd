@@ -1,51 +1,47 @@
-import { OpenVidu } from 'openvidu-browser';
-import { useOpenViduStore } from '@/stores/openViduStore';
-
-const OV = new OpenVidu();
+import { useRef, useState } from 'react';
+import { Publisher } from 'openvidu-browser';
+import { useRoomStore } from '@/stores/todo-store';
+import { useRoomStoreName } from '@/stores/roomStore';
+import { signalingSocket } from '@/libs/socket';
 
 export const useOpenViduControls = () => {
-  const {
-    session,
-    publisher,
-    isCameraOn,
-    isMicOn,
-    setPublisher,
-    setIsCameraOn,
-    setIsMicOn,
-  } = useOpenViduStore();
+  const publisherRef = useRef<Publisher | null>(null);
+  const [isCameraOn, setIsCameraOn] = useState(true);
+  const [isMicOn, setIsMicOn] = useState(true);
 
-  const recreatePublisher = async (
-    publishVideo: boolean,
-    publishAudio: boolean,
-  ) => {
-    if (!session) return;
+  const myUserId = useRoomStoreName((s) => s.myUserId);
+  const roomId = useRoomStore((s) => s.roomData?.roomId);
 
-    if (publisher) {
-      session.unpublish(publisher);
-    }
+  const setPublisher = (publisher: Publisher) => {
+    publisherRef.current = publisher;
+  };
 
-    const newPublisher = await OV.initPublisherAsync(undefined, {
-      audioSource: undefined,
-      videoSource: undefined,
-      publishAudio,
-      publishVideo,
-      mirror: true,
+  const toggleCam = () => {
+    const publisher = publisherRef.current;
+    if (!publisher || !myUserId || !roomId) return;
+
+    const newCamStatus = !publisher.stream.videoActive;
+    publisher.publishVideo(newCamStatus);
+    setIsCameraOn(newCamStatus);
+
+    signalingSocket.send(`/pub/data/camera/${roomId}`, {
+      userId: myUserId,
+      camStatus: newCamStatus,
     });
-
-    session.publish(newPublisher);
-    setPublisher(newPublisher);
   };
 
-  const toggleCam = async () => {
-    const newStatus = !isCameraOn;
-    setIsCameraOn(newStatus);
-    recreatePublisher(newStatus, isMicOn);
-  };
+  const toggleMic = () => {
+    const publisher = publisherRef.current;
+    if (!publisher || !myUserId || !roomId) return;
 
-  const toggleMic = async () => {
-    const newStatus = !isMicOn;
-    setIsMicOn(newStatus);
-    recreatePublisher(isCameraOn, newStatus);
+    const newMicStatus = !publisher.stream.audioActive;
+    publisher.publishAudio(newMicStatus);
+    setIsMicOn(newMicStatus);
+
+    signalingSocket.send(`/pub/data/mic/${roomId}`, {
+      userId: myUserId,
+      micStatus: newMicStatus,
+    });
   };
 
   return {
@@ -53,5 +49,6 @@ export const useOpenViduControls = () => {
     toggleMic,
     isCameraOn,
     isMicOn,
+    setPublisher,
   };
 };

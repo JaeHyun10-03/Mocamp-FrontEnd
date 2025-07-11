@@ -12,9 +12,15 @@ interface WorkspaceHeaderProps {
   roomName?: string;
   isOwner?: boolean;
   roomSeq?: string;
+  onResetTutorial?: () => void;
 }
 
-const WorkspaceHeader = ({ roomName = '', isOwner = true, roomSeq = '' }: WorkspaceHeaderProps) => {
+const WorkspaceHeader = ({
+  roomName = '',
+  isOwner = true,
+  roomSeq = '',
+  onResetTutorial,
+}: WorkspaceHeaderProps) => {
   const router = useRouter();
   const { id } = router.query;
   const roomId = Array.isArray(id) ? id[0] : id;
@@ -34,6 +40,10 @@ const WorkspaceHeader = ({ roomName = '', isOwner = true, roomSeq = '' }: Worksp
   const handleNoticeSubmit = (newNotice: string) => {
     updateNotice(newNotice);
     setShowNoticeModal(false);
+  };
+
+  const handleGoToTutorial = () => {
+    onResetTutorial?.();
   };
 
   useEffect(() => {
@@ -128,10 +138,6 @@ const WorkspaceHeader = ({ roomName = '', isOwner = true, roomSeq = '' }: Worksp
     } catch (err) {
       console.error('고유번호 복사 실패:', err);
     }
-  };
-
-  const handleGoToTutorial = () => {
-    router.push('/tutorial');
   };
 
   return (
