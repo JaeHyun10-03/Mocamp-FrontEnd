@@ -31,6 +31,7 @@ const WebCamTile = ({
   participants,
 }: WebCamTileProps) => {
   const { toggleCam, toggleMic, isCameraOn, isMicOn } = useOpenViduControlsStore();
+
   const [statusOpen, setStatusOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -61,6 +62,7 @@ const peerIsWorking = participant?.isWorking ?? true;
   const audioActive = isLocal ? isMicOn : peerMicOn;
 
 const { openDelegationModal, openNotDelegationModal } = useModalStore();
+
 
   useEffect(() => {
   if (videoRef.current && streamManager && videoActive) {

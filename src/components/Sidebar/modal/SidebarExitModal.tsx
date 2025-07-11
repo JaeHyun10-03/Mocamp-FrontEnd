@@ -1,4 +1,3 @@
-// 사이드바 나가기 모달
 import React from 'react';
 
 interface SidebarExitModalProps {
@@ -8,7 +7,7 @@ interface SidebarExitModalProps {
 
 const SidebarExitModal = ({ onConfirm, onCancel }: SidebarExitModalProps) => {
   return (
-    <div className="bg-opacity-50 fixed inset-0 z-50 flex justify-center bg-black pt-[58.67px] lg:pt-[82.5px] xl:pt-[110px]">
+    <div className="fixed inset-0 z-50 flex justify-center bg-[#D9D9D9]/80 pt-[58.67px] lg:pt-[82.5px] xl:pt-[110px]">
       <div className="relative h-[127px] w-[576px] rounded-br-[20px] rounded-bl-[20px] bg-white lg:h-[172.5px] lg:w-[810px] xl:h-[230px] xl:w-[1080px]">
         <div className="bg-primary h-[5.33px] w-full lg:h-[7.5px] xl:h-[10px]" />
         <p className="absolute top-[31px] left-[50%] w-full -translate-x-1/2 transform text-center text-[15px] font-semibold text-[#555555] lg:top-[43.5px] lg:text-[21px] xl:top-[58px] xl:text-[28px]">
