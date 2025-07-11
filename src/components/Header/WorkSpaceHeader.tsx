@@ -7,6 +7,7 @@ import Portal from '@/components/common/modal/Portal';
 import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
 import CopyComplete from '@/components/Header/modal/Copy';
 import { useRoomStore } from '@/stores/todo-store';
+import { useRoomStoreName } from '@/stores/roomStore';
 
 interface WorkspaceHeaderProps {
   roomName?: string;
@@ -24,6 +25,11 @@ const WorkspaceHeader = ({
   const router = useRouter();
   const { id } = router.query;
   const roomId = Array.isArray(id) ? id[0] : id;
+
+  const adminUsername = useRoomStoreName((s) => s.adminUsername);
+const myUsername = useRoomStoreName((s) => s.myUsername);
+const isAdmin = adminUsername === myUsername;
+
   const notice = useRoomStore((s) => {
     return s.notice;
   });
@@ -33,9 +39,9 @@ const WorkspaceHeader = ({
   const [isCopyModalOpen, setIsCopyModalOpen] = useState(false);
   const [isKakaoInitialized, setIsKakaoInitialized] = useState(false);
 
-  const handleNoticeClick = () => {
-    if (isOwner) setShowNoticeModal(true);
-  };
+const handleNoticeClick = () => {
+  if (isAdmin) setShowNoticeModal(true);
+};
 
   const handleNoticeSubmit = (newNotice: string) => {
     updateNotice(newNotice);
