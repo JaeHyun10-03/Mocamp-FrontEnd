@@ -14,6 +14,7 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
   const [subscribers, setSubscribers] = useState<StreamManager[]>([]);
   const [micStatus, setMicStatus] = useState(true);
   const [camStatus, setCamStatus] = useState(true);
+  const { isCameraOn, isMicOn } = useOpenViduStore.getState();
 
   const OVRef = useRef<OpenVidu | null>(null);
 
@@ -114,8 +115,8 @@ export const useOpenVidu = ({ sessionId, userName }: UseOpenViduParams) => {
       const newPublisher = ovInstance.initPublisher(undefined, {
         audioSource: undefined,
         videoSource: undefined,
-        publishAudio: micStatus,
-        publishVideo: camStatus,
+        publishAudio: isMicOn,
+  publishVideo: isCameraOn,
         resolution: getVideoResolution(),
         frameRate: 30,
         insertMode: 'APPEND',

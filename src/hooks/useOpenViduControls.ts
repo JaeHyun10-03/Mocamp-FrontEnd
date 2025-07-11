@@ -1,28 +1,57 @@
+import { OpenVidu } from 'openvidu-browser';
 import { useOpenViduStore } from '@/stores/openViduStore';
 
+const OV = new OpenVidu();
+
 export const useOpenViduControls = () => {
-  const publisher = useOpenViduStore((state) => state.publisher);
+  const {
+    session,
+    publisher,
+    isCameraOn,
+    isMicOn,
+    setPublisher,
+    setIsCameraOn,
+    setIsMicOn,
+  } = useOpenViduStore();
 
-  // 마이크
+  const recreatePublisher = async (
+    publishVideo: boolean,
+    publishAudio: boolean,
+  ) => {
+    if (!session) return;
 
-  const toggleMic = () => {
     if (publisher) {
-      const isAudioActive = publisher.stream.audioActive;
-      publisher.publishAudio(!isAudioActive);
+      session.unpublish(publisher);
     }
+
+    const newPublisher = await OV.initPublisherAsync(undefined, {
+      audioSource: undefined,
+      videoSource: undefined,
+      publishAudio,
+      publishVideo,
+      mirror: true,
+    });
+
+    session.publish(newPublisher);
+    setPublisher(newPublisher);
   };
 
-// 캠 
+  const toggleCam = async () => {
+    const newStatus = !isCameraOn;
+    setIsCameraOn(newStatus);
+    recreatePublisher(newStatus, isMicOn);
+  };
 
-  const toggleCam = () => {
-    if (publisher) {
-      const isVideoActive = publisher.stream.videoActive;
-      publisher.publishVideo(!isVideoActive);
-    }
+  const toggleMic = async () => {
+    const newStatus = !isMicOn;
+    setIsMicOn(newStatus);
+    recreatePublisher(isCameraOn, newStatus);
   };
 
   return {
-    toggleMic,
     toggleCam,
+    toggleMic,
+    isCameraOn,
+    isMicOn,
   };
 };

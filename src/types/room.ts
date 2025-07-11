@@ -52,3 +52,5 @@ export interface UserInfo {
   stream?: MediaStream | null;
   error?: string | null;
 }
+
+

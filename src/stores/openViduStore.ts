@@ -1,12 +1,24 @@
 import { create } from 'zustand';
-import { Publisher } from 'openvidu-browser';
+import { Session ,Publisher } from 'openvidu-browser';
 
 interface OpenViduState {
+   session: Session | null;
+   setSession: (session: Session) => void;
   publisher: Publisher | null;
-  setPublisher: (publisher: Publisher) => void;
+  isCameraOn: boolean;
+  isMicOn: boolean;
+  setPublisher: (p: Publisher) => void;
+  setIsCameraOn: (v: boolean) => void;
+  setIsMicOn: (v: boolean) => void;
 }
 
 export const useOpenViduStore = create<OpenViduState>((set) => ({
+   session: null,
+     setSession: (session) => set({ session }),
   publisher: null,
-  setPublisher: (publisher) => set({ publisher }),
+  isCameraOn: true,
+  isMicOn: true,
+  setPublisher: (p) => set({ publisher: p }),
+  setIsCameraOn: (v) => set({ isCameraOn: v }),
+  setIsMicOn: (v) => set({ isMicOn: v }),
 }));

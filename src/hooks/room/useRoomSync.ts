@@ -85,6 +85,15 @@ export const useRoomSync = (roomId?: string) => {
       });
     },
 
+    /*  작업 상태 변경 ------------------- */
+    onWorkStatusUpdate: (d) => {
+    useRoomStore.setState((state) => {
+      state.participants = state.participants.map((p) =>
+        p.userId === d.userId ? { ...p, isWorking: d.workStatus } : p,
+      );
+    });
+  },
+
     /*  개별 목표 토글 ------------------- */
     onCompleteUpdate: (d) => toggleGoal(d.userId, d.goalId, d.isCompleted),
 

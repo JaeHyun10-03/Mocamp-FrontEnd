@@ -42,5 +42,13 @@ export const useRoomPublisher = (roomId: string) => {
     safeSend(`/pub/data/resolution/${roomId}`, { resolution });
   };
 
-  return { toggleTodo, updateGoals, updateNotice, updateResolution };
+
+  const updateWorkStatus = (userId: number, workStatus: boolean) => {
+  safeSend(`/pub/data/work-status/${roomId}`, {
+    userId,
+    workStatus,
+  });
+};
+
+  return { toggleTodo, updateGoals, updateNotice, updateResolution,updateWorkStatus };
 };

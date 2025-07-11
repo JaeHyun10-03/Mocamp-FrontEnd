@@ -5,36 +5,52 @@ import ChiefIcon from '@/public/svgs/chief_fire.svg';
 import SelectIcon from '@/public/svgs/select.svg';
 import NoneIcon from '@/public/svgs/none.svg';
 import { StreamManager, Publisher } from 'openvidu-browser';
-import { useRoomStore } from '@/stores/roomStore';
+import { useRoomStoreName } from '@/stores/roomStore';
 import { useOpenVidu } from '@/hooks/useOpenVidu';
 import { useOpenViduControls } from '@/hooks/useOpenViduControls';
+import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
+import type { Participant } from '@/types/room';
 
 interface WebCamTileProps {
   streamManager: StreamManager;
   isLocal: boolean;
   toggleCamera?: () => void;
   toggleMic?: () => void;
+  roomId: string;
+  myUserId: number;
+  participants: Participant[];
 }
 
-const WebCamTile = ({ streamManager, isLocal }: WebCamTileProps) => {
+const WebCamTile = ({
+  streamManager,
+  isLocal,
+  roomId,
+  myUserId,
+  participants,
+}: WebCamTileProps) => {
+  const { toggleCam, toggleMic, isCameraOn, isMicOn } = useOpenViduControls();
   const [statusOpen, setStatusOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  const adminUsername = useRoomStore((state) => state.adminUsername);
-  const myUsername = useRoomStore((state) => state.myUsername);
+  const adminUsername = useRoomStoreName((state) => state.adminUsername);
+  const myUsername = useRoomStoreName((state) => state.myUsername);
   const [isWorking, setIsWorking] = useState(true);
-  const { toggleMic, toggleCam } = useOpenViduControls();
+  const { updateWorkStatus } = useRoomPublisher(String(roomId));
   // const [camStatus, setCamStatus] = useState(true);
   // const [micStatus, setMicStatus] = useState(true);
-  const videoActive = isLocal
-    ? streamManager.stream.videoActive // 나의 publisher
-    : true;
-
-  const audioActive = isLocal ? streamManager.stream.audioActive : true;
+  const videoActive = isLocal ? isCameraOn : true;
+  const audioActive = isLocal ? isMicOn : true;
 
   const nickname = JSON.parse(streamManager.stream.connection.data).clientData;
   const isAdmin = nickname === adminUsername;
   const isMe = nickname === myUsername;
+
+  console.log('🔍 nickname from stream:', nickname);
+  console.log('👤 myUsername from store:', myUsername);
+  console.log('✅ isMe 결과:', nickname === myUsername);
+
+  const participant = participants.find((p) => p.username === nickname);
+  const peerIsWorking = participant?.isWorking ?? true;
 
   useEffect(() => {
     if (videoRef.current && streamManager) {
@@ -70,14 +86,16 @@ const WebCamTile = ({ streamManager, isLocal }: WebCamTileProps) => {
   // };
 
   const handleWorkStatus = (working: boolean) => {
+    if (isWorking === working) return;
     setIsWorking(working);
+    updateWorkStatus(myUserId, working);
     setStatusOpen(false);
   };
 
   if (!streamManager || !streamManager.stream) {
     return null;
   }
-  // 카메라 꺼진 서버에서 주는데 안받아옴
+
   return (
     <div className="relative flex h-[144px] w-[256px] flex-shrink-0 flex-col justify-end rounded-[20px] bg-[#3D3D3D] lg:h-[202.5px] lg:w-[360px] xl:h-[270px] xl:w-[480px]">
       {videoActive ? (
@@ -117,40 +135,40 @@ const WebCamTile = ({ streamManager, isLocal }: WebCamTileProps) => {
         </span>
 
         <div className="ml-auto flex items-center">
-          {isMe && (
-            <div className="relative">
-              <button
-                onClick={() => setStatusOpen(!statusOpen)}
-                className={`h-[40px] w-[107px] rounded-[5px] px-[20px] text-[16px] font-semibold backdrop-blur-[2px] ${
-                  isWorking
-                    ? 'bg-[rgba(39,207,165,0.80)] text-white'
-                    : 'bg-[rgba(95,95,95,0.50)] text-white'
-                }`}
-              >
-                {isWorking ? '작업 중' : '자리 비움'}
-              </button>
-              {statusOpen && (
-                <div className="absolute top-full left-0 z-50 inline-flex h-[90px] flex-col items-start justify-between gap-[16px] rounded-[10px] border border-[#E8E8E8] bg-white p-[20px]">
-                  <div className="flex items-center gap-[10px]">
-                    <button onClick={() => handleWorkStatus(true)} className="flex items-center">
-                      {isWorking ? <SelectIcon /> : <NoneIcon />}
-                    </button>
-                    <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
-                      작업 중
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-[10px]">
-                    <button onClick={() => handleWorkStatus(false)} className="flex items-center">
-                      {!isWorking ? <SelectIcon /> : <NoneIcon />}
-                    </button>
-                    <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
-                      자리 비움
-                    </span>
-                  </div>
+          <div className="relative">
+            <button
+              onClick={isMe ? () => setStatusOpen(!statusOpen) : undefined}
+              disabled={!isMe}
+              className={`h-[40px] w-[107px] rounded-[5px] px-[20px] text-[16px] font-semibold backdrop-blur-[2px] ${
+                peerIsWorking
+                  ? 'bg-[rgba(39,207,165,0.80)] text-white'
+                  : 'bg-[rgba(95,95,95,0.50)] text-white'
+              }`}
+            >
+              {peerIsWorking ? '작업 중' : '자리 비움'}
+            </button>
+
+            {isMe && statusOpen && (
+              <div className="absolute top-full left-0 z-50 inline-flex h-[90px] flex-col items-start justify-between gap-[16px] rounded-[10px] border border-[#E8E8E8] bg-white p-[20px]">
+                <div className="flex items-center gap-[10px]">
+                  <button onClick={() => handleWorkStatus(true)} className="flex items-center">
+                    {isWorking ? <SelectIcon /> : <NoneIcon />}
+                  </button>
+                  <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
+                    작업 중
+                  </span>
                 </div>
-              )}
-            </div>
-          )}
+                <div className="flex items-center gap-[10px]">
+                  <button onClick={() => handleWorkStatus(false)} className="flex items-center">
+                    {!isWorking ? <SelectIcon /> : <NoneIcon />}
+                  </button>
+                  <span className="text-[10px] font-medium whitespace-nowrap text-[#555]">
+                    자리 비움
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
 
           <button
             onClick={toggleCam}

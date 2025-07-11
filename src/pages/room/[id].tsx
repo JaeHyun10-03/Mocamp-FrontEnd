@@ -15,8 +15,10 @@ import { leaveRoom } from '@/apis/room';
 import { useRoomSync } from '@/hooks/room/useRoomSync';
 import { useOpenVidu } from '@/hooks/useOpenVidu';
 import { useRoomStore } from '@/stores/todo-store';
+import { useRoomStoreName } from '@/stores/roomStore';
 import { useTutorial } from '@/stores/tutorial-store';
 import Tutorial from '@/components/WebCam/tutorial/Tutorial';
+
 
 const MAX_VISIBLE = 2;
 
@@ -51,6 +53,13 @@ const RoomPage = () => {
   const me = participants.find((p) => p.isMyGoal);
   const myUserId = me?.userId ?? 0;
   const myUsername = me?.username ?? '';
+
+  useEffect(() => {
+  if (me?.username) {
+    useRoomStoreName.getState().setMyUsername(me.username);
+  }
+}, [me?.username]);
+
 
   const { session, publisher, subscribers, joinSession, leaveSession, toggleCam, toggleMic } =
     useOpenVidu({
