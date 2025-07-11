@@ -19,7 +19,6 @@ import { useRoomStoreName } from '@/stores/roomStore';
 import { useTutorial } from '@/stores/tutorial-store';
 import Tutorial from '@/components/WebCam/tutorial/Tutorial';
 
-
 const MAX_VISIBLE = 2;
 
 const RoomPage = () => {
@@ -55,11 +54,10 @@ const RoomPage = () => {
   const myUsername = me?.username ?? '';
 
   useEffect(() => {
-  if (me?.username) {
-    useRoomStoreName.getState().setMyUsername(me.username);
-  }
-}, [me?.username]);
-
+    if (me?.username) {
+      useRoomStoreName.getState().setMyUsername(me.username);
+    }
+  }, [me?.username]);
 
   const { session, publisher, subscribers, joinSession, leaveSession, toggleCam, toggleMic } =
     useOpenVidu({
@@ -153,6 +151,9 @@ const RoomPage = () => {
                   isLocal={true}
                   toggleCamera={toggleCam}
                   toggleMic={toggleMic}
+                  roomId={String(roomId)}
+                  myUserId={myUserId}
+                  participants={participants}
                 />
               )}
               {subscribers.map((subscriber, index) => (
@@ -160,6 +161,9 @@ const RoomPage = () => {
                   key={subscriber.stream.connection.connectionId}
                   streamManager={subscriber}
                   isLocal={false}
+                  roomId={String(roomId)}
+                  myUserId={myUserId}
+                  participants={participants}
                 />
               ))}
             </div>
