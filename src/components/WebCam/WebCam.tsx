@@ -12,7 +12,6 @@ import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
 import type { Participant } from '@/types/room';
 import { useOpenViduControlsStore } from '@/stores/openViduControlsStore';
 
-
 interface WebCamTileProps {
   streamManager: StreamManager;
   isLocal: boolean;
@@ -31,7 +30,6 @@ const WebCamTile = ({
   participants,
 }: WebCamTileProps) => {
   const { toggleCam, toggleMic, isCameraOn, isMicOn } = useOpenViduControlsStore();
-
   const [statusOpen, setStatusOpen] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -62,13 +60,6 @@ const peerIsWorking = participant?.isWorking ?? true;
   const audioActive = isLocal ? isMicOn : peerMicOn;
 
 
-
-  console.log('🔍 nickname from stream:', nickname);
-  console.log('👤 myUsername from store:', myUsername);
-  console.log('✅ isMe 결과:', nickname === myUsername);
-
-  const participant = participants.find((p) => p.username === nickname);
-  const peerIsWorking = participant?.isWorking ?? true;
 
   useEffect(() => {
   if (videoRef.current && streamManager && videoActive) {
