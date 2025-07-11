@@ -11,6 +11,7 @@ import { useOpenViduControls } from '@/hooks/useOpenViduControls';
 import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
 import type { Participant } from '@/types/room';
 import { useOpenViduControlsStore } from '@/stores/openViduControlsStore';
+import { useModalStore } from '@/stores/modalStore';
 
 interface WebCamTileProps {
   streamManager: StreamManager;
@@ -59,7 +60,7 @@ const peerIsWorking = participant?.isWorking ?? true;
 
   const audioActive = isLocal ? isMicOn : peerMicOn;
 
-
+const { openDelegationModal, openNotDelegationModal } = useModalStore();
 
   useEffect(() => {
   if (videoRef.current && streamManager && videoActive) {
@@ -126,9 +127,9 @@ const peerIsWorking = participant?.isWorking ?? true;
           <button
             onClick={() => {
               if (isMe && isAdmin) {
-                // 방장 위임 모달 열기 - 아이콘이 떠야 확인을 하지.
+                openDelegationModal();
               } else {
-                // 위임 불가 알림
+                openNotDelegationModal();
               }
             }}
           >

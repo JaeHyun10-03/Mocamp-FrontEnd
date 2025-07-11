@@ -18,6 +18,8 @@ import { useRoomStore } from '@/stores/todo-store';
 import { useTutorial } from '@/stores/tutorial-store';
 import Tutorial from '@/components/WebCam/tutorial/Tutorial';
 import { useRoomStoreName } from '@/stores/roomStore';
+import { useRoomPublisher } from '@/hooks/room/useRoomPublisher';
+import { useModalStore } from '@/stores/modalStore';
 
 const MAX_VISIBLE = 2;
 
@@ -28,7 +30,11 @@ const RoomPage = () => {
 
   const roomId = Array.isArray(id) ? id[0] : id || '';
   const isHost = from === 'create';
-  
+
+  useEffect(() => {
+  useRoomStore.getState().setIsHost(isHost);
+}, [isHost]);
+
   const camStatus = cam !== 'false';
   const micStatus = mic !== 'false';
 
@@ -61,6 +67,26 @@ const RoomPage = () => {
       userName: myUsername,
     });
 
+  const { delegateAdmin } = useRoomPublisher(String(roomId));
+
+  const {
+    isDelegationModalOpen,
+    isNotDelegationModalOpen,
+    openNotDelegationModal,
+    closeDelegationModal,
+    closeNotDelegationModal,
+  } = useModalStore();
+
+  const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
+
+  const handleDelegation = () => {
+    if (selectedUserId) {
+      delegateAdmin(selectedUserId);
+      closeDelegationModal();
+      setSelectedUserId(null);
+    }
+  };
+
   useEffect(() => {
     if (me?.username) {
       setMyUsername(me.username);
@@ -72,6 +98,14 @@ const RoomPage = () => {
       joinSession();
     }
   }, [session, roomId, myUsername]);
+
+
+  useEffect(() => {
+  if (isHost && me?.username) {
+    setMyUsername(me.username);
+    useRoomStoreName.getState().setAdminUsername(me.username); 
+  }
+}, [isHost, me?.username]);
 
   const handleLeaveRoom = async () => {
     try {
@@ -88,9 +122,11 @@ const RoomPage = () => {
       joinSession();
     }
   }, [roomId, myUsername, session, joinSession]);
+  
 
   const [slideIndex, setSlideIndex] = useState(0);
-  const [isNotDelegationModalOpen, setIsNotDelegationModalOpen] = useState(false);
+  // const [isNotDelegationModalOpen, setIsNotDelegationModalOpen] = useState(false);
+  // const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
 
   const meGroup = todoGroups.find((g) => g.isMyGoal);
   const othersTodo = todoGroups.filter((g) => !g.isMyGoal);
@@ -185,10 +221,21 @@ const RoomPage = () => {
                   className="absolute top-1/2 left-[-48px] h-8 w-8 -translate-y-1/2 cursor-pointer lg:left-[-67.5px] lg:h-[45px] lg:w-[45px] xl:left-[-90px] xl:h-[60px] xl:w-[60px]"
                 />
               )}
-
-              {isNotDelegationModalOpen && (
-                <NotDelegationModal onClose={() => setIsNotDelegationModalOpen(false)} />
+              {isDelegationModalOpen && (
+                <DelegationModal
+                  participants={participants}
+                  currentUserId={myUserId}
+                  selectedUserId={selectedUserId}
+                  onSelect={setSelectedUserId}
+                  onConfirm={handleDelegation}
+                  onClose={() => {
+                    closeDelegationModal();
+                    setSelectedUserId(null);
+                  }}
+                />
               )}
+
+              {isNotDelegationModalOpen && <NotDelegationModal onClose={closeNotDelegationModal} />}
 
               <div className="flex w-[789.33px] gap-[10.67px] lg:w-[1110px] lg:gap-[15px] xl:w-[1480px] xl:gap-5">
                 {visibleTodoGroups.map((g) => (

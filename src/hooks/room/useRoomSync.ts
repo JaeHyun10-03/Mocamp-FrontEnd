@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useRoomStore } from '@/stores/todo-store';
 import { useRoomSubscriber } from '@/hooks/room/useRoomSubscriber';
 import { fetchRoomData, fetchRoomParticipants } from '@/apis/room';
+import { useRoomStoreName } from '@/stores/roomStore';
 
 export const useRoomSync = (roomId?: string) => {
   const {
@@ -112,7 +113,6 @@ export const useRoomSync = (roomId?: string) => {
       });
     },
 
-
     /*  개별 목표 토글 ------------------- */
     onCompleteUpdate: (d) => toggleGoal(d.userId, d.goalId, d.isCompleted),
 
@@ -132,6 +132,9 @@ export const useRoomSync = (roomId?: string) => {
           if (p.username === d.newAdminUsername) p.isAdmin = true;
         });
       });
+
+      // 방장 이름 상태 전역으로 업데이트
+      useRoomStoreName.getState().setAdminUsername(d.newAdminUsername);
     },
   });
 };

@@ -50,5 +50,12 @@ export const useRoomPublisher = (roomId: string) => {
   });
 };
 
-  return { toggleTodo, updateGoals, updateNotice, updateResolution,updateWorkStatus };
+const delegateAdmin = (newAdminId: number) => {
+  safeSend(`/pub/data/delegation/${roomId}`, {
+    newAdminId,
+  });
+};
+
+
+  return { toggleTodo, updateGoals, updateNotice, updateResolution,updateWorkStatus,delegateAdmin };
 };
