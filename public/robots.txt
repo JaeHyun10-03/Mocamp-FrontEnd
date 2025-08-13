@@ -1,0 +1,10 @@
+# *
+User-agent: *
+Allow: /
+Disallow: /admin
+
+# Host
+Host: https://mocamp-front-end.vercel.app
+
+# Sitemaps
+Sitemap: https://mocamp-front-end.vercel.app/sitemap.xml
